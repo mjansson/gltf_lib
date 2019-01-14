@@ -17,6 +17,7 @@
     glTF library entry points */
 
 #include <gltf/types.h>
+#include <gltf/hashstrings.h>
 
 /*! Initialize glTF library
     \return 0 if success, <0 if error */
@@ -46,3 +47,16 @@ GLTF_API void
 gltf_module_parse_config(const char* path, size_t path_size,
                          const char* buffer, size_t size,
                          const struct json_token_t* tokens, size_t num_tokens);
+
+/*! Read glTF or glb data
+\param gltf Target glTF data structure
+\param stream Source stream
+\return 0 if success, <0 if error */
+GLTF_API int
+gltf_read(gltf_t* gltf, stream_t* stream);
+
+/*! Write glTF or glb data
+\param gltf Source glTF data structure
+\param stream Target stream */
+GLTF_API int
+gltf_write(const gltf_t* gltf, stream_t* stream, gltf_write_mode write_mode);

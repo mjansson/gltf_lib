@@ -1,0 +1,4 @@
+
+HASH_GLTF                               gltf
+HASH_GLB                                glb
+HASH_ASSET                              asset
