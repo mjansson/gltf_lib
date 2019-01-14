@@ -48,6 +48,16 @@ gltf_module_parse_config(const char* path, size_t path_size,
                          const char* buffer, size_t size,
                          const struct json_token_t* tokens, size_t num_tokens);
 
+/*! Initialize glTF data structure
+\param gltf Target glTF data structure */
+GLTF_API void
+gltf_initialize(gltf_t* gltf);
+
+/*! Finalize glTF data structure
+\param gltf glTF data structure */
+GLTF_API void
+gltf_finalize(gltf_t* gltf);
+
 /*! Read glTF or glb data
 \param gltf Target glTF data structure
 \param stream Source stream

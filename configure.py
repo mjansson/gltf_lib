@@ -70,4 +70,3 @@ else:
       generator.app(module = test, sources = ['main.c' ], binname = 'test-' + test, basepath = 'test', implicit_deps = [gltf_lib], libs = linklibs, resources = test_resources, includepaths = includepaths)
     else:
       generator.bin(module = test, sources = ['main.c' ], binname = 'test-' + test, basepath = 'test', implicit_deps = [gltf_lib], libs = linklibs, includepaths = includepaths)
-s1mpl3t0CR4CK!

@@ -57,6 +57,8 @@ enum gltf_component_type {
 typedef struct gltf_t                    gltf_t;
 typedef struct gltf_accessor_t           gltf_accessor_t;
 typedef struct gltf_asset_t              gltf_asset_t;
+typedef struct gltf_buffer_t             gltf_buffer_t;
+typedef struct gltf_buffer_view_t        gltf_buffer_view_t;
 typedef struct gltf_config_t             gltf_config_t;
 typedef struct gltf_glb_header_t         gltf_glb_header_t;
 
@@ -100,7 +102,7 @@ struct gltf_glb_header_t {
 };
 
 struct gltf_t {
-	gltf_asset_t            asset;
+	gltf_asset_t*           asset;
 	gltf_accessor_t*        accessors;
 	gltf_buffer_view_t*     buffer_views;
 	gltf_buffer_t*          buffers;
