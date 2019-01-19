@@ -57,6 +57,12 @@ enum gltf_component_type {
 	GLTF_COMPONENT_SOMETHING = 5100
 };
 
+enum gltf_alpha_mode {
+	GLTF_ALPHA_MODE_OPAQUE,
+	GLTF_ALPHA_MODE_MASK,
+	GLTF_ALPHA_MODE_BLEND
+};
+
 typedef struct gltf_t                    gltf_t;
 typedef struct gltf_accessor_t           gltf_accessor_t;
 typedef struct gltf_asset_t              gltf_asset_t;
@@ -64,13 +70,16 @@ typedef struct gltf_buffer_t             gltf_buffer_t;
 typedef struct gltf_buffer_view_t        gltf_buffer_view_t;
 typedef struct gltf_config_t             gltf_config_t;
 typedef struct gltf_glb_header_t         gltf_glb_header_t;
+typedef struct gltf_material_t           gltf_material_t;
 typedef struct gltf_node_t               gltf_node_t;
 typedef struct gltf_scene_t              gltf_scene_t;
+typedef struct gltf_texture_info_t       gltf_texture_info_t;
 typedef struct gltf_transform_t          gltf_transform_t;
 
 typedef enum gltf_component_type         gltf_component_type;
 typedef enum gltf_data_type              gltf_data_type;
 typedef enum gltf_write_mode             gltf_write_mode;
+typedef enum gltf_alpha_mode             gltf_alpha_mode;
 
 struct gltf_config_t {
 	size_t _unused;
@@ -101,6 +110,13 @@ struct gltf_buffer_t {
 	unsigned int            byte_length;
 };
 
+struct gltf_texture_info_t {
+	unsigned int            index;
+	unsigned int            texcoord;
+	string_const_t          extensions;
+	string_const_t          extras;
+};
+
 struct gltf_transform_t {
 	double                  scale[3];
 	double                  rotation[4];
@@ -110,18 +126,38 @@ struct gltf_transform_t {
 
 struct gltf_node_t {
 	string_const_t          name;
-	string_const_t          extensions;
-	string_const_t          extras;
 	unsigned int            mesh;
 	gltf_transform_t        transform;
+	string_const_t          extensions;
+	string_const_t          extras;
+};
+
+struct gltf_material_t {
+	string_const_t          name;
+	gltf_texture_info_t     base_color_texture;
+	double                  base_color_factor[4];
+	gltf_texture_info_t     metallic_roughness_texture;
+	double                  metallic_factor;
+	double                  roughness_factor;
+	gltf_texture_info_t     normal_texture;
+	double                  normal_scale;
+	gltf_texture_info_t     occlusion_texture;
+	double                  occlusion_strength;
+	gltf_texture_info_t     emissive_texture;
+	double                  emissive_factor[3];
+	gltf_alpha_mode         alpha_mode;
+	double                  alpha_cutoff;
+	bool                    double_sided;
+	string_const_t          extensions;
+	string_const_t          extras;
 };
 
 struct gltf_scene_t {
 	string_const_t          name;
-	string_const_t          extensions;
-	string_const_t          extras;
 	unsigned int*           nodes;
 	unsigned int            num_nodes;
+	string_const_t          extensions;
+	string_const_t          extras;
 };
 
 struct gltf_glb_header_t {
@@ -141,4 +177,6 @@ struct gltf_t {
 	unsigned int            num_scenes;
 	gltf_node_t*            nodes;
 	unsigned int            num_nodes;
+	gltf_material_t*        materials;
+	unsigned int            num_materials;
 };
