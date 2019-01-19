@@ -18,6 +18,8 @@
 
 #include <gltf/types.h>
 #include <gltf/hashstrings.h>
+#include <gltf/node.h>
+#include <gltf/scene.h>
 
 /*! Initialize glTF library
     \return 0 if success, <0 if error */

@@ -39,6 +39,9 @@
 #  endif
 #endif
 
+#define GLTF_MAX_INDEX 0x7FFFFFFF
+#define GLTF_INVALID_INDEX 0xFFFFFFFF
+
 enum gltf_write_mode {
 	GLTF_WRITE_GLTF,
 	GLTF_WRITE_GLTF_EMBED,
@@ -61,6 +64,9 @@ typedef struct gltf_buffer_t             gltf_buffer_t;
 typedef struct gltf_buffer_view_t        gltf_buffer_view_t;
 typedef struct gltf_config_t             gltf_config_t;
 typedef struct gltf_glb_header_t         gltf_glb_header_t;
+typedef struct gltf_node_t               gltf_node_t;
+typedef struct gltf_scene_t              gltf_scene_t;
+typedef struct gltf_transform_t          gltf_transform_t;
 
 typedef enum gltf_component_type         gltf_component_type;
 typedef enum gltf_data_type              gltf_data_type;
@@ -95,6 +101,29 @@ struct gltf_buffer_t {
 	unsigned int            byte_length;
 };
 
+struct gltf_transform_t {
+	double                  scale[3];
+	double                  rotation[4];
+	double                  translation[3];
+	double                  matrix[4][4];
+};
+
+struct gltf_node_t {
+	string_const_t          name;
+	string_const_t          extensions;
+	string_const_t          extras;
+	unsigned int            mesh;
+	gltf_transform_t        transform;
+};
+
+struct gltf_scene_t {
+	string_const_t          name;
+	string_const_t          extensions;
+	string_const_t          extras;
+	unsigned int*           nodes;
+	unsigned int            num_nodes;
+};
+
 struct gltf_glb_header_t {
 	uint32_t magic;
 	uint32_t version;
@@ -102,8 +131,14 @@ struct gltf_glb_header_t {
 };
 
 struct gltf_t {
-	gltf_asset_t*           asset;
+	void*                   buffer;
+	gltf_asset_t            asset;
 	gltf_accessor_t*        accessors;
 	gltf_buffer_view_t*     buffer_views;
 	gltf_buffer_t*          buffers;
+	unsigned int            scene;
+	gltf_scene_t*           scenes;
+	unsigned int            num_scenes;
+	gltf_node_t*            nodes;
+	unsigned int            num_nodes;
 };

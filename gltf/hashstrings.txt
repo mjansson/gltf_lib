@@ -3,3 +3,14 @@ HASH_GLTF                               gltf
 HASH_GLB                                glb
 HASH_ASSET                              asset
 HASH_GENERATOR                          generator
+HASH_SCENE                              scene
+HASH_SCENES                             scenes
+HASH_NAME                               name
+HASH_EXTENSIONS                         extensions
+HASH_EXTRAS                             extras
+HASH_NODES                              nodes
+HASH_MESH                               mesh
+HASH_SCALE                              scale
+HASH_ROTATION                           rotation
+HASH_TRANSLATION                        translation
+HASH_MATRIX                             matrix

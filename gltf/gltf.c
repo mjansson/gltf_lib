@@ -20,6 +20,8 @@
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
+#define GLTF_INDEX_MAX 0x7FFFFFFF
+
 int
 gltf_module_initialize(gltf_config_t config) {
 	FOUNDATION_UNUSED(config);
@@ -52,45 +54,212 @@ gltf_initialize(gltf_t* gltf) {
 	memset(gltf, 0, sizeof(gltf_t));
 }
 
+static void
+gltf_finalize_nodes(gltf_t* gltf) {
+	if (gltf->nodes) {
+		memory_deallocate(gltf->nodes);
+	}
+}
+
 void
 gltf_finalize(gltf_t* gltf) {
 	if (gltf) {
-		memory_deallocate(gltf->asset);
+		gltf_nodes_finalize(gltf);
+		gltf_scenes_finalize(gltf);
+		memory_deallocate(gltf->buffer);
 	}
 }
 
 static int
 gltf_parse_asset(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
-	if (tokens[itoken].type != JSON_OBJECT)
+	if (tokens[itoken].type != JSON_OBJECT) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main asset attribute has invalid type"));
 		return -1;
-
-	string_const_t generator = {0};
-	string_const_t version = {0};
+	}
 
 	itoken = tokens[itoken].child;
 	while (itoken) {
 		string_const_t identifier = json_token_identifier(buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if ((identifier_hash == HASH_GENERATOR) && (tokens[itoken].type == JSON_STRING))
-			generator = json_token_value(buffer, tokens + itoken);
-		else if ((identifier_hash == HASH_VERSION) && (tokens[itoken].type == JSON_STRING))
-			version = json_token_value(buffer, tokens + itoken);
+			gltf->asset.generator = json_token_value(buffer, tokens + itoken);
+		else if ((identifier_hash == HASH_VERSION) && ((tokens[itoken].type == JSON_STRING) ||
+		                                               (tokens[itoken].type == JSON_PRIMITIVE)))
+			gltf->asset.version = json_token_value(buffer, tokens + itoken);
+
+		itoken = tokens[itoken].sibling;
 	}
 
-	size_t storage_size = generator.length + version.length + 2;
-	gltf->asset = memory_allocate(HASH_GLTF, sizeof(gltf_asset_t) + storage_size, 0, MEMORY_PERSISTENT);
+	return 0;
+}
 
-	char* string_buffer = pointer_offset(gltf->asset, sizeof(gltf_asset_t));
-	gltf->asset->generator = string_const(string_buffer, generator.length);
-	memcpy(string_buffer, generator.str, generator.length);
-	string_buffer[generator.length] = 0;
-	string_buffer += generator.length + 1;
+static int
+gltf_parse_scene_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                       gltf_scene_t* scene) {
+	FOUNDATION_UNUSED(gltf);
+	if (tokens[itoken].type != JSON_ARRAY) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Scene nodes attribute has invalid type"));
+		return -1;
+	}
 
-	gltf->asset->version = string_const(string_buffer, version.length);
-	memcpy(string_buffer, version.str, version.length);
-	string_buffer[version.length] = 0;
+	size_t num_nodes = tokens[itoken].value_length;
+	if (num_nodes > GLTF_INDEX_MAX)
+		return -1;
+	if (!num_nodes)
+		return 0;
+
+	scene->num_nodes = (unsigned int)num_nodes;
+	scene->nodes = memory_allocate(HASH_GLTF, sizeof(unsigned int) * num_nodes, 0, MEMORY_PERSISTENT);
+
+	unsigned int icounter = 0;
+	size_t inode = tokens[itoken].child;
+	while (inode) {
+		if ((tokens[inode].type != JSON_STRING) && (tokens[inode].type != JSON_PRIMITIVE))
+			return -1;
+
+		string_const_t value = json_token_value(buffer, tokens + inode);
+		unsigned int node = string_to_uint(STRING_ARGS(value), false);
+		if (node > GLTF_INDEX_MAX)
+			return -1;
+		scene->nodes[icounter] = node;
+
+		inode = tokens[inode].sibling;
+		++icounter;
+	}
 
 	return 0;
+}
+
+static int
+gltf_parse_scenes_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                        gltf_scene_t* scene) {
+	if (tokens[itoken].type != JSON_OBJECT)
+		return -1;
+
+	int result = 0;
+	itoken = tokens[itoken].child;
+	while (itoken) {
+		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
+		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
+		if (identifier_hash == HASH_NODES)
+			result = gltf_parse_scene_nodes(gltf, buffer, tokens, itoken, scene);
+		else if ((identifier_hash == HASH_NAME) && (tokens[itoken].type == JSON_STRING))
+			scene->name = json_token_value(buffer, tokens + itoken);
+		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
+			scene->extensions = json_token_value(buffer, tokens + itoken);
+		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
+			scene->extras = json_token_value(buffer, tokens + itoken);
+
+		if (result)
+			break;
+		itoken = tokens[itoken].sibling;
+	}
+
+	return result;
+}
+
+static int
+gltf_parse_scenes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
+	if (tokens[itoken].type != JSON_ARRAY) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main scenes attribute has invalid type"));
+		return -1;
+	}
+
+	size_t num_scenes = tokens[itoken].value_length;
+	if (num_scenes > GLTF_INDEX_MAX)
+		return -1;
+	if (!num_scenes)
+		return 0;
+
+	size_t storage_size = sizeof(gltf_scene_t) * num_scenes;
+	gltf_scenes_finalize(gltf);
+	gltf->num_scenes = (unsigned int)num_scenes;
+	gltf->scenes = memory_allocate(HASH_GLTF, storage_size, 0,
+	                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+
+	int result = 0;
+	unsigned int icounter = 0;
+	size_t iscene = tokens[itoken].child;
+	while (iscene) {
+		result = gltf_parse_scenes_scene(gltf, buffer, tokens, iscene, gltf->scenes + icounter);
+		if (result)
+			break;
+		iscene = tokens[iscene].sibling;
+		++icounter;
+	}
+
+	return result;
+}
+
+static int
+gltf_parse_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
+	if ((tokens[itoken].type != JSON_STRING) && (tokens[itoken].type != JSON_PRIMITIVE)) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main scene attribute has invalid type"));
+		return -1;
+	}
+
+	string_const_t value = json_token_value(buffer, tokens + itoken);
+	gltf->scene = string_to_uint(STRING_ARGS(value), false);
+	return 0;
+}
+
+static int
+gltf_parse_nodes_node(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                      gltf_node_t* node) {
+	if (tokens[itoken].type != JSON_OBJECT)
+		return -1;
+
+	int result = 0;
+	itoken = tokens[itoken].child;
+	while (itoken) {
+		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
+		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
+		if ((identifier_hash == HASH_NAME) && (tokens[itoken].type == JSON_STRING))
+			node->name = json_token_value(buffer, tokens + itoken);
+		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
+			node->extensions = json_token_value(buffer, tokens + itoken);
+		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
+			node->extras = json_token_value(buffer, tokens + itoken);
+
+		if (result)
+			break;
+		itoken = tokens[itoken].sibling;
+	}
+
+	return result;
+}
+
+static int
+gltf_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
+	if (tokens[itoken].type != JSON_ARRAY) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main nodes attribute has invalid type"));
+		return -1;
+	}
+
+	size_t num_nodes = tokens[itoken].value_length;
+	if (num_nodes > GLTF_INDEX_MAX)
+		return -1;
+	if (!num_nodes)
+		return 0;
+
+	size_t storage_size = sizeof(gltf_node_t) * num_nodes;
+	gltf_finalize_nodes(gltf);
+	gltf->num_nodes = (unsigned int)num_nodes;
+	gltf->nodes = memory_allocate(HASH_GLTF, storage_size, 0,
+	                              MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+
+	int result = 0;
+	unsigned int icounter = 0;
+	size_t iscene = tokens[itoken].child;
+	while (iscene) {
+		result = gltf_parse_nodes_node(gltf, buffer, tokens, iscene, gltf->nodes + icounter);
+		if (result)
+			break;
+		iscene = tokens[iscene].sibling;
+		++icounter;
+	}
+
+	return result;
 }
 
 static int
@@ -117,7 +286,8 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 	size_t capacity = stream_tell(stream) - stream_offset;
 	stream_seek(stream, stream_offset, STREAM_SEEK_BEGIN);
 
-	char* buffer = memory_allocate(HASH_GLTF, capacity, 0, MEMORY_TEMPORARY);
+	memory_deallocate(gltf->buffer);
+	gltf->buffer = memory_allocate(HASH_GLTF, capacity, 0, MEMORY_PERSISTENT);
 	int result = -1;
 
 	size_t itoken = 0;
@@ -126,15 +296,15 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 	json_token_t* tokens = memory_allocate(HASH_GLTF, sizeof(json_token_t) * token_capacity, 0,
 	                                       MEMORY_TEMPORARY);
 
-	if (stream_read(stream, buffer, capacity) != capacity)
+	if (stream_read(stream, gltf->buffer, capacity) != capacity)
 		goto exit;
 
-	num_tokens = json_parse(buffer, capacity, tokens, token_capacity);
+	num_tokens = json_parse(gltf->buffer, capacity, tokens, token_capacity);
 	if (num_tokens > token_capacity) {
 		tokens = memory_reallocate(tokens, sizeof(json_token_t) * num_tokens, 0,
 		                           sizeof(json_token_t) * token_capacity, MEMORY_TEMPORARY);
 		token_capacity = num_tokens;
-		num_tokens = json_parse(buffer, capacity, tokens, token_capacity);
+		num_tokens = json_parse(gltf->buffer, capacity, tokens, token_capacity);
 		if (num_tokens > token_capacity)
 			goto exit;
 	}
@@ -142,26 +312,47 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 	if (tokens[0].type != JSON_OBJECT)
 		goto exit;
 
+	result = 0;
 	itoken = tokens[0].child;
 	while (itoken) {
-		string_const_t identifier = json_token_identifier(buffer, tokens + itoken);
+		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if (identifier_hash == HASH_ASSET)
-			result = gltf_parse_asset(gltf, buffer, tokens, itoken);
+			result = gltf_parse_asset(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_SCENE)
+			result = gltf_scene_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_SCENES)
+			result = gltf_scenes_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_NODES)
+			result = gltf_nodes_parse(gltf, gltf->buffer, tokens, itoken);
 
-
+		if (result)
+			break;
 		itoken = tokens[itoken].sibling;
 	}
 
-	if (result == 0)
-		log_infof(HASH_GLTF, STRING_CONST("Read glTF file version %.*s - %.*f"),
-		          STRING_FORMAT(gltf->asset->version), STRING_FORMAT(gltf->asset->generator));
-	else
+	if (result == 0) {
+		log_infof(HASH_GLTF, STRING_CONST("Read glTF file version %.*s - %.*s"),
+		          STRING_FORMAT(gltf->asset.version), STRING_FORMAT(gltf->asset.generator));
+		log_infof(HASH_GLTF, STRING_CONST("  %u scenes"), gltf->num_scenes);
+		for (unsigned int iscene = 0; iscene < gltf->num_scenes; ++iscene) {
+			gltf_scene_t* scene = gltf->scenes + iscene;
+			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" %u nodes"), iscene,
+			          STRING_FORMAT(scene->name), scene->num_nodes);
+		}
+		log_infof(HASH_GLTF, STRING_CONST("  %u nodes"), gltf->num_nodes);
+		for (unsigned int inode = 0; inode < gltf->num_nodes; ++inode) {
+			gltf_node_t* node = gltf->nodes + inode;
+			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" mesh %d"), inode,
+			          STRING_FORMAT(node->name), (int)node->mesh);
+		}
+	}
+	else {
 		log_infof(HASH_GLTF, STRING_CONST("Failed reading glTF file: %d"), result);
+	}
 
 exit:
 	memory_deallocate(tokens);
-	memory_deallocate(buffer);
 	return result;
 }
 
