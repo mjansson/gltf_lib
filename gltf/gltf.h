@@ -20,6 +20,8 @@
 #include <gltf/hashstrings.h>
 #include <gltf/node.h>
 #include <gltf/scene.h>
+#include <gltf/material.h>
+#include <gltf/mesh.h>
 
 /*! Initialize glTF library
     \return 0 if success, <0 if error */
@@ -72,3 +74,15 @@ gltf_read(gltf_t* gltf, stream_t* stream);
 \param stream Target stream */
 GLTF_API int
 gltf_write(const gltf_t* gltf, stream_t* stream, gltf_write_mode write_mode);
+
+int
+gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                      unsigned int* value);
+
+int
+gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                     double* value);
+
+int
+gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                           double* values, unsigned int dim);

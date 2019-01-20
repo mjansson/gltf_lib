@@ -63,23 +63,24 @@ enum gltf_alpha_mode {
 	GLTF_ALPHA_MODE_BLEND
 };
 
-typedef struct gltf_t                    gltf_t;
-typedef struct gltf_accessor_t           gltf_accessor_t;
-typedef struct gltf_asset_t              gltf_asset_t;
-typedef struct gltf_buffer_t             gltf_buffer_t;
-typedef struct gltf_buffer_view_t        gltf_buffer_view_t;
-typedef struct gltf_config_t             gltf_config_t;
-typedef struct gltf_glb_header_t         gltf_glb_header_t;
-typedef struct gltf_material_t           gltf_material_t;
-typedef struct gltf_node_t               gltf_node_t;
-typedef struct gltf_scene_t              gltf_scene_t;
-typedef struct gltf_texture_info_t       gltf_texture_info_t;
-typedef struct gltf_transform_t          gltf_transform_t;
+typedef struct gltf_t                        gltf_t;
+typedef struct gltf_accessor_t               gltf_accessor_t;
+typedef struct gltf_asset_t                  gltf_asset_t;
+typedef struct gltf_buffer_t                 gltf_buffer_t;
+typedef struct gltf_buffer_view_t            gltf_buffer_view_t;
+typedef struct gltf_config_t                 gltf_config_t;
+typedef struct gltf_glb_header_t             gltf_glb_header_t;
+typedef struct gltf_material_t               gltf_material_t;
+typedef struct gltf_node_t                   gltf_node_t;
+typedef struct gltf_pbr_metallic_roughness_t gltf_pbr_metallic_roughness_t;
+typedef struct gltf_scene_t                  gltf_scene_t;
+typedef struct gltf_texture_info_t           gltf_texture_info_t;
+typedef struct gltf_transform_t              gltf_transform_t;
 
-typedef enum gltf_component_type         gltf_component_type;
-typedef enum gltf_data_type              gltf_data_type;
-typedef enum gltf_write_mode             gltf_write_mode;
-typedef enum gltf_alpha_mode             gltf_alpha_mode;
+typedef enum gltf_component_type             gltf_component_type;
+typedef enum gltf_data_type                  gltf_data_type;
+typedef enum gltf_write_mode                 gltf_write_mode;
+typedef enum gltf_alpha_mode                 gltf_alpha_mode;
 
 struct gltf_config_t {
 	size_t _unused;
@@ -132,13 +133,19 @@ struct gltf_node_t {
 	string_const_t          extras;
 };
 
-struct gltf_material_t {
-	string_const_t          name;
+struct gltf_pbr_metallic_roughness_t {
 	gltf_texture_info_t     base_color_texture;
 	double                  base_color_factor[4];
 	gltf_texture_info_t     metallic_roughness_texture;
 	double                  metallic_factor;
 	double                  roughness_factor;
+	string_const_t          extensions;
+	string_const_t          extras;
+};
+
+struct gltf_material_t {
+	string_const_t          name;
+	gltf_pbr_metallic_roughness_t metallic_roughness;
 	gltf_texture_info_t     normal_texture;
 	double                  normal_scale;
 	gltf_texture_info_t     occlusion_texture;
