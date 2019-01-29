@@ -39,3 +39,11 @@ HASH_INDICES                            indices
 HASH_URI                                uri
 HASH_BUFFERS                            buffers
 HASH_BUFFER                             buffer
+HASH_POSITION                           POSITION
+HASH_NORMAL                             NORMAL
+HASH_TANGENT                            TANGENT
+HASH_TEXCOORD_0                         TEXCOORD_0
+HASH_TEXCOORD_1                         TEXCOORD_1
+HASH_COLOR_0                            COLOR_0
+HASH_JOINTS_0                           JOINTS_0
+HASH_WEIGHTS_0                          WEIGHTS_0

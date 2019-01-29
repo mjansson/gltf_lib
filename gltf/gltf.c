@@ -52,13 +52,6 @@ gltf_initialize(gltf_t* gltf) {
 	memset(gltf, 0, sizeof(gltf_t));
 }
 
-static void
-gltf_finalize_nodes(gltf_t* gltf) {
-	if (gltf->nodes) {
-		memory_deallocate(gltf->nodes);
-	}
-}
-
 void
 gltf_finalize(gltf_t* gltf) {
 	if (gltf) {
@@ -66,6 +59,7 @@ gltf_finalize(gltf_t* gltf) {
 		gltf_materials_finalize(gltf);
 		gltf_nodes_finalize(gltf);
 		gltf_scenes_finalize(gltf);
+		gltf_buffers_finalize(gltf);
 		memory_deallocate(gltf->buffer);
 	}
 }
@@ -374,6 +368,8 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			result = gltf_materials_parse(gltf, gltf->buffer, tokens, itoken);
 		else if (identifier_hash == HASH_MESHES)
 			result = gltf_meshes_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_BUFFERS)
+			result = gltf_buffers_parse(gltf, gltf->buffer, tokens, itoken);
 
 		if (result)
 			break;

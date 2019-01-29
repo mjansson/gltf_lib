@@ -18,6 +18,7 @@
 
 #include <gltf/types.h>
 #include <gltf/hashstrings.h>
+#include <gltf/buffer.h>
 #include <gltf/node.h>
 #include <gltf/scene.h>
 #include <gltf/material.h>
