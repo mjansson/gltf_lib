@@ -20,3 +20,9 @@ gltf_buffers_finalize(gltf_t* gltf);
 
 GLTF_API int
 gltf_buffers_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken);
+
+GLTF_API void
+gltf_buffer_views_finalize(gltf_t* gltf);
+
+GLTF_API int
+gltf_buffer_views_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken);

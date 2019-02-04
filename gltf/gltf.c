@@ -243,65 +243,6 @@ gltf_parse_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t 
 }
 
 static int
-gltf_parse_nodes_node(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                      gltf_node_t* node) {
-	if (tokens[itoken].type != JSON_OBJECT)
-		return -1;
-
-	int result = 0;
-	itoken = tokens[itoken].child;
-	while (itoken) {
-		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
-		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
-		if ((identifier_hash == HASH_NAME) && (tokens[itoken].type == JSON_STRING))
-			node->name = json_token_value(buffer, tokens + itoken);
-		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
-			node->extensions = json_token_value(buffer, tokens + itoken);
-		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
-			node->extras = json_token_value(buffer, tokens + itoken);
-
-		if (result)
-			break;
-		itoken = tokens[itoken].sibling;
-	}
-
-	return result;
-}
-
-static int
-gltf_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
-	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main nodes attribute has invalid type"));
-		return -1;
-	}
-
-	size_t num_nodes = tokens[itoken].value_length;
-	if (num_nodes > GLTF_MAX_INDEX)
-		return -1;
-	if (!num_nodes)
-		return 0;
-
-	size_t storage_size = sizeof(gltf_node_t) * num_nodes;
-	gltf_finalize_nodes(gltf);
-	gltf->num_nodes = (unsigned int)num_nodes;
-	gltf->nodes = memory_allocate(HASH_GLTF, storage_size, 0,
-	                              MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-
-	int result = 0;
-	unsigned int icounter = 0;
-	size_t iscene = tokens[itoken].child;
-	while (iscene) {
-		result = gltf_parse_nodes_node(gltf, buffer, tokens, iscene, gltf->nodes + icounter);
-		if (result)
-			break;
-		iscene = tokens[iscene].sibling;
-		++icounter;
-	}
-
-	return result;
-}
-
-static int
 glb_read(gltf_t* gltf, stream_t* stream) {
 	FOUNDATION_UNUSED(gltf);
 	FOUNDATION_UNUSED(stream);
@@ -370,6 +311,8 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			result = gltf_meshes_parse(gltf, gltf->buffer, tokens, itoken);
 		else if (identifier_hash == HASH_BUFFERS)
 			result = gltf_buffers_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_BUFFERVIEWS)
+			result = gltf_buffer_views_parse(gltf, gltf->buffer, tokens, itoken);
 
 		if (result)
 			break;

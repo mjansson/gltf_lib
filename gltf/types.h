@@ -117,14 +117,20 @@ struct gltf_asset_t {
 };
 
 struct gltf_buffer_view_t {
+	string_const_t          name;
 	unsigned int            buffer;
 	unsigned int            byte_offset;
 	unsigned int            byte_length;
+	string_const_t          extensions;
+	string_const_t          extras;
 };
 
 struct gltf_buffer_t {
+	string_const_t          name;
 	string_const_t          uri;
 	unsigned int            byte_length;
+	string_const_t          extensions;
+	string_const_t          extras;
 };
 
 struct gltf_texture_info_t {
@@ -215,8 +221,11 @@ struct gltf_t {
 	void*                   buffer;
 	gltf_asset_t            asset;
 	gltf_accessor_t*        accessors;
+	unsigned int            num_accessors;
 	gltf_buffer_view_t*     buffer_views;
+	unsigned int            num_buffer_views;
 	gltf_buffer_t*          buffers;
+	unsigned int            num_buffers;
 	unsigned int            scene;
 	gltf_scene_t*           scenes;
 	unsigned int            num_scenes;

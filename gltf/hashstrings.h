@@ -54,3 +54,6 @@
 #define HASH_COLOR_0 static_hash_string("COLOR_0", 7, 0x1969f4292e8d4823ULL)
 #define HASH_JOINTS_0 static_hash_string("JOINTS_0", 8, 0x93c37f6e90b509cULL)
 #define HASH_WEIGHTS_0 static_hash_string("WEIGHTS_0", 9, 0x7e8ae32851c92ed0ULL)
+#define HASH_BYTELENGTH static_hash_string("byteLength", 10, 0xc99bcf73b910167eULL)
+#define HASH_BUFFERVIEWS static_hash_string("bufferViews", 11, 0x877fb67339a7617eULL)
+#define HASH_ACCESSORS static_hash_string("accessors", 9, 0xd3f2b1941cef0888ULL)

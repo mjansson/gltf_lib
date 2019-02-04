@@ -47,3 +47,6 @@ HASH_TEXCOORD_1                         TEXCOORD_1
 HASH_COLOR_0                            COLOR_0
 HASH_JOINTS_0                           JOINTS_0
 HASH_WEIGHTS_0                          WEIGHTS_0
+HASH_BYTELENGTH                         byteLength
+HASH_BUFFERVIEWS                        bufferViews
+HASH_ACCESSORS                          accessors
