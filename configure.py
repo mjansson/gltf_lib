@@ -19,7 +19,7 @@ extrasources = []
 includepaths = []
 
 gltf_sources = [
-  'buffer.c', 'gltf.c', 'material.c', 'mesh.c', 'node.c', 'scene.c', 'version.c' ]
+  'accessor.c', 'buffer.c', 'gltf.c', 'material.c', 'mesh.c', 'node.c', 'scene.c', 'version.c' ]
 
 gltf_lib = generator.lib(module = 'gltf', sources = gltf_sources + extrasources)
 #gltf_so = generator.sharedlib(module = 'gltf', sources = gltf_sources + extrasources)

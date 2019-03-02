@@ -1,4 +1,4 @@
-/* scene.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
+/* buffer.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
  *
  * This library provides a cross-platform glTF I/O library in C11 providing
  * glTF ascii/binary reading and writing functionality.
@@ -124,6 +124,16 @@ gltf_buffer_view_parse_view(gltf_t* gltf, const char* data, json_token_t* tokens
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if ((identifier_hash == HASH_NAME) && (tokens[itoken].type == JSON_STRING))
 			buffer_view->name = json_token_value(data, tokens + itoken);
+		else if (identifier_hash == HASH_BUFFER)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &buffer_view->buffer);
+		else if (identifier_hash == HASH_BYTEOFFSET)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &buffer_view->byte_offset);
+		else if (identifier_hash == HASH_BYTELENGTH)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &buffer_view->byte_length);
+		else if (identifier_hash == HASH_BYTESTRIDE)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &buffer_view->byte_stride);
+		else if (identifier_hash == HASH_TARGET)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &buffer_view->target);
 		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
 			buffer_view->extensions = json_token_value(data, tokens + itoken);
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))

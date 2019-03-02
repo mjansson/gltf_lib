@@ -1,4 +1,4 @@
-/* gltf.h  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
+/* gltf.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
  *
  * This library provides a cross-platform glTF I/O library in C11 providing
  * glTF ascii/binary reading and writing functionality.
@@ -60,6 +60,7 @@ gltf_finalize(gltf_t* gltf) {
 		gltf_nodes_finalize(gltf);
 		gltf_scenes_finalize(gltf);
 		gltf_buffers_finalize(gltf);
+		gltf_accessors_finalize(gltf);
 		memory_deallocate(gltf->buffer);
 	}
 }
@@ -313,6 +314,8 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			result = gltf_buffers_parse(gltf, gltf->buffer, tokens, itoken);
 		else if (identifier_hash == HASH_BUFFERVIEWS)
 			result = gltf_buffer_views_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_ACCESSORS)
+			result = gltf_accessors_parse(gltf, gltf->buffer, tokens, itoken);
 
 		if (result)
 			break;

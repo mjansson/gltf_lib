@@ -77,6 +77,7 @@ enum gltf_attribute {
 
 typedef struct gltf_t                        gltf_t;
 typedef struct gltf_accessor_t               gltf_accessor_t;
+typedef struct gltf_accessor_sparse_t        gltf_accessor_sparse_t;
 typedef struct gltf_asset_t                  gltf_asset_t;
 typedef struct gltf_attribute_t              gltf_attribute_t;
 typedef struct gltf_buffer_t                 gltf_buffer_t;
@@ -102,13 +103,26 @@ struct gltf_config_t {
 	size_t _unused;
 };
 
+struct gltf_accessor_sparse_t {
+	unsigned int            count;
+	//...	
+	string_const_t          extensions;
+	string_const_t          extras;
+};
+
 struct gltf_accessor_t {
+	string_const_t          name;
 	unsigned int            buffer_view;
+	unsigned int            byte_offset;
 	gltf_data_type          type;
 	gltf_component_type     component_type;
 	unsigned int            count;
+	bool                    normalized;
 	float                   min[3];
 	float                   max[3];
+	gltf_accessor_sparse_t  sparse;
+	string_const_t          extensions;
+	string_const_t          extras;
 };
 
 struct gltf_asset_t {
@@ -121,6 +135,8 @@ struct gltf_buffer_view_t {
 	unsigned int            buffer;
 	unsigned int            byte_offset;
 	unsigned int            byte_length;
+	unsigned int            byte_stride;
+	unsigned int            target;
 	string_const_t          extensions;
 	string_const_t          extras;
 };

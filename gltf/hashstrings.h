@@ -55,5 +55,8 @@
 #define HASH_JOINTS_0 static_hash_string("JOINTS_0", 8, 0x93c37f6e90b509cULL)
 #define HASH_WEIGHTS_0 static_hash_string("WEIGHTS_0", 9, 0x7e8ae32851c92ed0ULL)
 #define HASH_BYTELENGTH static_hash_string("byteLength", 10, 0xc99bcf73b910167eULL)
+#define HASH_BYTEOFFSET static_hash_string("byteOffset", 10, 0xa862d37ce988e5eeULL)
+#define HASH_BYTESTRIDE static_hash_string("byteStride", 10, 0x7ba96012a8e5f8f9ULL)
 #define HASH_BUFFERVIEWS static_hash_string("bufferViews", 11, 0x877fb67339a7617eULL)
 #define HASH_ACCESSORS static_hash_string("accessors", 9, 0xd3f2b1941cef0888ULL)
+#define HASH_TARGET static_hash_string("target", 6, 0xa81ed21230448e70ULL)
