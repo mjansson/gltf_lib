@@ -80,6 +80,20 @@ gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* toke
 }
 
 int
+gltf_token_to_boolean(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                      bool* value) {
+	FOUNDATION_UNUSED(gltf);
+	if (!itoken || ((tokens[itoken].type != JSON_PRIMITIVE) && (tokens[itoken].type != JSON_STRING))) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Boolean attribute has invalid type"));
+		return -1;
+	}
+
+	string_const_t strval = json_token_value(buffer, tokens + itoken);
+	*value = !string_equal(STRING_ARGS(strval), STRING_CONST("false"));
+	return 0;
+}
+
+int
 gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                      double* value) {
 	FOUNDATION_UNUSED(gltf);
@@ -106,6 +120,48 @@ gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* token
 		if (gltf_token_to_double(gltf, buffer, tokens, itoken, values + ielem))
 			return -1;
 		itoken = tokens[itoken].sibling;
+	}
+	return 0;
+}
+
+int
+gltf_token_to_component_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                             gltf_component_type* value) {
+	unsigned int intval = 0;
+	int result = gltf_token_to_integer(gltf, buffer, tokens, itoken, &intval);
+	if (!result)
+		*value = (gltf_component_type)intval;
+	return result;
+}
+
+int
+gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                        gltf_data_type* value) {
+	FOUNDATION_UNUSED(gltf);
+	if (!itoken || (tokens[itoken].type != JSON_STRING)) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Data type attribute has invalid type"));
+		return -1;
+	}
+
+	string_const_t strval = json_token_value(buffer, tokens + itoken);
+	hash_t strhash = hash(strval.str, strval.length);
+	if (strhash == HASH_SCALAR)
+		*value = GLTF_DATA_SCALAR;
+	else if (strhash == HASH_VEC2)
+		*value = GLTF_DATA_VEC2;
+	else if (strhash == HASH_VEC3)
+		*value = GLTF_DATA_VEC3;
+	else if (strhash == HASH_VEC4)
+		*value = GLTF_DATA_VEC4;
+	else if (strhash == HASH_MAT2)
+		*value = GLTF_DATA_MAT2;
+	else if (strhash == HASH_MAT3)
+		*value = GLTF_DATA_MAT3;
+	else if (strhash == HASH_MAT4)
+		*value = GLTF_DATA_MAT4;
+	else {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Data type attribute has invalid value"));
+		return -1;
 	}
 	return 0;
 }

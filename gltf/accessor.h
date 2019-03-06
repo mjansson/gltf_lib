@@ -1,4 +1,4 @@
-/* buffer.h  -  glTF library  -  Public Domain  -  2019 Mattias Jansson / Rampant Pixels
+/* accessor.h  -  glTF library  -  Public Domain  -  2019 Mattias Jansson / Rampant Pixels
  *
  * This library provides a cross-platform glTF I/O library in C11 providing
  * glTF ascii/binary reading and writing functionality.

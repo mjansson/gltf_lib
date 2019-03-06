@@ -88,3 +88,15 @@ gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 int
 gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                            double* values, unsigned int dim);
+
+int
+gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                        gltf_data_type* value);
+
+int
+gltf_token_to_component_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                             gltf_component_type* value);
+
+int
+gltf_token_to_boolean(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                      bool* value);

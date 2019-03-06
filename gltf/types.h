@@ -50,11 +50,22 @@ enum gltf_write_mode {
 };
 
 enum gltf_data_type {
-	GLTF_DATA_VEC3 = 0
+	GLTF_DATA_SCALAR = 0,
+	GLTF_DATA_VEC2,
+	GLTF_DATA_VEC3,
+	GLTF_DATA_VEC4,
+	GLTF_DATA_MAT2,
+	GLTF_DATA_MAT3,
+	GLTF_DATA_MAT4
 };
 
 enum gltf_component_type {
-	GLTF_COMPONENT_SOMETHING = 5100
+	GLTF_COMPONENT_BYTE = 5120,
+	GLTF_COMPONENT_UNSIGNED_BYTE = 5121,
+	GLTF_COMPONENT_SHORT = 5122,
+	GLTF_COMPONENT_UNSIGNED_SHORT = 5123,
+	GLTF_COMPONENT_UNSIGNED_INT = 5125,
+	GLTF_COMPONENT_FLOAT = 5126
 };
 
 enum gltf_alpha_mode {
@@ -118,8 +129,8 @@ struct gltf_accessor_t {
 	gltf_component_type     component_type;
 	unsigned int            count;
 	bool                    normalized;
-	float                   min[3];
-	float                   max[3];
+	double                  min[3];
+	double                  max[3];
 	gltf_accessor_sparse_t  sparse;
 	string_const_t          extensions;
 	string_const_t          extras;
