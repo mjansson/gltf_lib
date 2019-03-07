@@ -86,6 +86,16 @@ enum gltf_attribute {
 	GLTF_ATTRIBUTE_COUNT
 };
 
+enum gltf_primitive_mode {
+	GLTF_POINTS = 0,
+	GLTF_LINES,
+	GLTF_LINE_LOOP,
+	GLTF_LINE_STRIP,
+	GLTF_TRIANGLES,
+	GLTF_TRIANGLE_STRIP,
+	GLTF_TRIANGLE_FAN
+};
+
 typedef struct gltf_t                        gltf_t;
 typedef struct gltf_accessor_t               gltf_accessor_t;
 typedef struct gltf_accessor_sparse_t        gltf_accessor_sparse_t;
@@ -101,6 +111,8 @@ typedef struct gltf_node_t                   gltf_node_t;
 typedef struct gltf_pbr_metallic_roughness_t gltf_pbr_metallic_roughness_t;
 typedef struct gltf_primitive_t              gltf_primitive_t;
 typedef struct gltf_scene_t                  gltf_scene_t;
+typedef struct gltf_sparse_indices_t         gltf_sparse_indices_t;
+typedef struct gltf_sparse_values_t          gltf_sparse_values_t;
 typedef struct gltf_texture_info_t           gltf_texture_info_t;
 typedef struct gltf_transform_t              gltf_transform_t;
 
@@ -109,14 +121,31 @@ typedef enum gltf_data_type                  gltf_data_type;
 typedef enum gltf_write_mode                 gltf_write_mode;
 typedef enum gltf_alpha_mode                 gltf_alpha_mode;
 typedef enum gltf_attribute                  gltf_attribute;
+typedef enum gltf_primitive_mode             gltf_primitive_mode;
 
 struct gltf_config_t {
 	size_t _unused;
 };
 
+struct gltf_sparse_indices_t {
+	unsigned int            buffer_view;
+	unsigned int            byte_offset;
+	gltf_component_type     component_type;
+	string_const_t          extensions;
+	string_const_t          extras;
+};
+
+struct gltf_sparse_values_t {
+	unsigned int            buffer_view;
+	unsigned int            byte_offset;
+	string_const_t          extensions;
+	string_const_t          extras;
+};
+
 struct gltf_accessor_sparse_t {
 	unsigned int            count;
-	//...	
+	gltf_sparse_indices_t   indices;
+	gltf_sparse_values_t    values;
 	string_const_t          extensions;
 	string_const_t          extras;
 };
@@ -186,6 +215,9 @@ struct gltf_primitive_t {
 	unsigned int            attributes[GLTF_ATTRIBUTE_COUNT];
 	gltf_attribute_t*       attributes_custom;
 	unsigned int            num_attributes_custom;
+	gltf_primitive_mode     mode;
+	string_const_t          extensions;
+	string_const_t          extras;
 };
 
 struct gltf_mesh_t {
@@ -247,6 +279,10 @@ struct gltf_glb_header_t {
 struct gltf_t {
 	void*                   buffer;
 	gltf_asset_t            asset;
+	unsigned int            num_extension_used;
+	string_const_t*         extensions_used;
+	unsigned int            num_extension_required;
+	string_const_t*         extensions_required;
 	gltf_accessor_t*        accessors;
 	unsigned int            num_accessors;
 	gltf_buffer_view_t*     buffer_views;

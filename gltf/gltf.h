@@ -20,6 +20,7 @@
 #include <gltf/hashstrings.h>
 #include <gltf/accessor.h>
 #include <gltf/buffer.h>
+#include <gltf/extension.h>
 #include <gltf/node.h>
 #include <gltf/scene.h>
 #include <gltf/material.h>
@@ -88,6 +89,10 @@ gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 int
 gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                            double* values, unsigned int dim);
+
+int
+gltf_token_to_string_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                           string_const_t* values, unsigned int dim);
 
 int
 gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,

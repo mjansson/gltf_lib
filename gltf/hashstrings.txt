@@ -7,6 +7,8 @@ HASH_SCENE                              scene
 HASH_SCENES                             scenes
 HASH_NAME                               name
 HASH_EXTENSIONS                         extensions
+HASH_EXTENSIONSUSED                     extensionsUsed
+HASH_EXTENSIONSREQUIRED                 extensionsRequired
 HASH_EXTRAS                             extras
 HASH_NODES                              nodes
 HASH_MESHES                             meshes
@@ -61,6 +63,8 @@ HASH_NORMALIZED                         normalized
 HASH_MIN                                min
 HASH_MAX                                max
 HASH_SPARSE                             sparse
+HASH_VALUES                             values
+HASH_MODE                               mode
 HASH_SCALAR                             SCALAR
 HASH_VEC2                               VEC2
 HASH_VEC3                               VEC3

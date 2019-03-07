@@ -128,9 +128,11 @@ gltf_mesh_parse_primitive(gltf_t* gltf, const char* buffer, json_token_t* tokens
 		return -1;
 	}
 
+	primitive->mode = GLTF_TRIANGLES;
+
 	int result = 0;
 	itoken = tokens[itoken].child;
-	while (itoken) {
+	while (itoken && !result) {
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if (identifier_hash == HASH_ATTRIBUTES)
@@ -139,9 +141,13 @@ gltf_mesh_parse_primitive(gltf_t* gltf, const char* buffer, json_token_t* tokens
 			result = gltf_token_to_integer(gltf, buffer, tokens, itoken, &primitive->indices);
 		else if (identifier_hash == HASH_MATERIAL)
 			result = gltf_token_to_integer(gltf, buffer, tokens, itoken, &primitive->material);
+		else if (identifier_hash == HASH_MODE)
+			result = gltf_token_to_integer(gltf, buffer, tokens, itoken, (unsigned int*)&primitive->mode);
+		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
+			primitive->extensions = json_token_value(buffer, tokens + itoken);
+		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
+			primitive->extras = json_token_value(buffer, tokens + itoken);
 
-		if (result)
-			break;
 		itoken = tokens[itoken].sibling;
 	}
 
@@ -163,15 +169,15 @@ gltf_mesh_parse_primitives(gltf_t* gltf, const char* buffer, json_token_t* token
 	if (!num_primitives)
 		return 0;
 
+	size_t size = sizeof(gltf_primitive_t) * num_primitives;
+	mesh->num_primitives = (unsigned int)num_primitives;
+	mesh->primitives = memory_allocate(HASH_GLTF, size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+
 	int result = 0;
 	unsigned int iprim = 0;
 	itoken = tokens[itoken].child;
-	while (itoken) {
-		result =
-		    gltf_mesh_parse_primitive(gltf, buffer, tokens, itoken, mesh->primitives + iprim);
-
-		if (result)
-			break;
+	while (itoken && !result) {
+		result = gltf_mesh_parse_primitive(gltf, buffer, tokens, itoken, mesh->primitives + iprim);
 		itoken = tokens[itoken].sibling;
 		++iprim;
 	}

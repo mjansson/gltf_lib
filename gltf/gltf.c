@@ -61,6 +61,8 @@ gltf_finalize(gltf_t* gltf) {
 		gltf_scenes_finalize(gltf);
 		gltf_buffers_finalize(gltf);
 		gltf_accessors_finalize(gltf);
+		memory_deallocate(gltf->extensions_used);
+		memory_deallocate(gltf->extensions_required);
 		memory_deallocate(gltf->buffer);
 	}
 }
@@ -372,6 +374,10 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			result = gltf_buffer_views_parse(gltf, gltf->buffer, tokens, itoken);
 		else if (identifier_hash == HASH_ACCESSORS)
 			result = gltf_accessors_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_EXTENSIONSUSED)
+			result = gltf_extensions_used_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_EXTENSIONSREQUIRED)
+			result = gltf_extensions_required_parse(gltf, gltf->buffer, tokens, itoken);
 
 		if (result)
 			break;
@@ -392,6 +398,17 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			gltf_node_t* node = gltf->nodes + inode;
 			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" mesh %d"), inode,
 			          STRING_FORMAT(node->name), (int)node->mesh);
+		}
+		log_infof(HASH_GLTF, STRING_CONST("  %u meshes"), gltf->num_meshes);
+		for (unsigned int imesh = 0; imesh < gltf->num_meshes; ++imesh) {
+			gltf_mesh_t* mesh = gltf->meshes + imesh;
+			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" %d primitives"), imesh,
+			          STRING_FORMAT(mesh->name), (int)mesh->num_primitives);
+			for (unsigned int iprim = 0; iprim < mesh->num_primitives; ++iprim) {
+				gltf_primitive_t* prim = mesh->primitives + iprim;
+				log_infof(HASH_GLTF, STRING_CONST("      %u: type %d material %d"), iprim,
+				          prim->mode, prim->material);
+			}
 		}
 	}
 	else {

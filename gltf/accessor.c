@@ -32,21 +32,104 @@ gltf_accessor_initialize(gltf_accessor_t* accessor) {
 }
 
 static int
+gltf_accessor_parse_sparse_indices(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken,
+                                   gltf_sparse_indices_t* indices) {
+	if (tokens[itoken].type != JSON_OBJECT) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Accessor sparse indices attribute has invalid type"));
+		return -1;
+	}
+
+	int result = 0;
+	itoken = tokens[itoken].child;
+	while (itoken && !result) {
+		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
+		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
+		if (identifier_hash == HASH_BUFFERVIEW)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &indices->buffer_view);
+		else if (identifier_hash == HASH_BYTEOFFSET)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &indices->byte_offset);
+		else if (identifier_hash == HASH_COMPONENTTYPE)
+			result = gltf_token_to_component_type(gltf, data, tokens, itoken, &indices->component_type);
+		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
+			indices->extensions = json_token_value(data, tokens + itoken);
+		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
+			indices->extras = json_token_value(data, tokens + itoken);
+	
+		itoken = tokens[itoken].sibling;
+	}
+
+	return result;
+}
+
+static int
+gltf_accessor_parse_sparse_values(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken,
+                                   gltf_sparse_values_t* values) {
+	if (tokens[itoken].type != JSON_OBJECT) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Accessor sparse vaöies attribute has invalid type"));
+		return -1;
+	}
+
+	int result = 0;
+	itoken = tokens[itoken].child;
+	while (itoken && !result) {
+		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
+		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
+		if (identifier_hash == HASH_BUFFERVIEW)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &values->buffer_view);
+		else if (identifier_hash == HASH_BYTEOFFSET)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &values->byte_offset);
+		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
+			values->extensions = json_token_value(data, tokens + itoken);
+		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
+			values->extras = json_token_value(data, tokens + itoken);
+	
+		itoken = tokens[itoken].sibling;
+	}
+
+	return result;
+}
+
+static int
 gltf_accessor_parse_sparse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken,
-                           gltf_accessor_t* accessor) {
-	FOUNDATION_UNUSED(gltf);
-	FOUNDATION_UNUSED(data);
-	FOUNDATION_UNUSED(tokens);
-	FOUNDATION_UNUSED(itoken);
-	FOUNDATION_UNUSED(accessor);
-	return 0;
+                           gltf_accessor_sparse_t* sparse) {
+	if (tokens[itoken].type != JSON_OBJECT) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Accessor sparse attribute has invalid type"));
+		return -1;
+	}
+
+	int result = 0;
+	itoken = tokens[itoken].child;
+	while (itoken && !result) {
+		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
+		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
+		if (identifier_hash == HASH_COUNT)
+			result = gltf_token_to_integer(gltf, data, tokens, itoken, &sparse->count);
+		else if (identifier_hash == HASH_INDICES)
+			result = gltf_accessor_parse_sparse_indices(gltf, data, tokens, itoken, &sparse->indices);
+		else if (identifier_hash == HASH_VALUES)
+			result = gltf_accessor_parse_sparse_values(gltf, data, tokens, itoken, &sparse->values);
+		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
+			sparse->extensions = json_token_value(data, tokens + itoken);
+		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
+			sparse->extras = json_token_value(data, tokens + itoken);
+	
+		itoken = tokens[itoken].sibling;
+	}
+
+	return result;
 }
 
 static int
 gltf_accessors_parse_accessor(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken,
                               gltf_accessor_t* accessor) {
-	if (tokens[itoken].type != JSON_OBJECT)
+	if (tokens[itoken].type != JSON_OBJECT) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Accessor attribute has invalid type"));
 		return -1;
+	}
 
 	gltf_accessor_initialize(accessor);
 
@@ -74,14 +157,12 @@ gltf_accessors_parse_accessor(gltf_t* gltf, const char* data, json_token_t* toke
 		else if (identifier_hash == HASH_MAX)
 			result = gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->max, 3);
 		else if (identifier_hash == HASH_SPARSE)
-			result = gltf_accessor_parse_sparse(gltf, data, tokens, itoken, accessor);
+			result = gltf_accessor_parse_sparse(gltf, data, tokens, itoken, &accessor->sparse);
 		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
 			accessor->extensions = json_token_value(data, tokens + itoken);
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
 			accessor->extras = json_token_value(data, tokens + itoken);
 
-		if (result)
-			break;
 		itoken = tokens[itoken].sibling;
 	}
 
