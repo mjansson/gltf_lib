@@ -57,7 +57,7 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 	int result = 0;
 	size_t iparent = itoken;
 	itoken = tokens[iparent].child;
-	while (itoken) {
+	while (!result && itoken) {
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if (identifier_hash == HASH_POSITION)
@@ -81,8 +81,6 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 		else
 			++customCount;
 
-		if (result)
-			break;
 		itoken = tokens[itoken].sibling;
 	}
 
@@ -90,9 +88,12 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 	primitive->attributes_custom = memory_allocate(HASH_GLTF, sizeof(gltf_attribute_t) * customCount, 0,
 	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
+	for (unsigned int iattrib = 0; iattrib < customCount; ++iattrib)
+		primitive->attributes_custom[iattrib].accessor = GLTF_INVALID_INDEX;
+
 	customCount = 0;
 	itoken = tokens[iparent].child;
-	while (customCount && itoken) {
+	while (!result && itoken && customCount) {
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if ((identifier_hash == HASH_POSITION) ||
@@ -109,10 +110,8 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 		attrib->semantic = identifier.str;
 		attrib->semantic_length = identifier.length;
 		result = gltf_token_to_integer(gltf, buffer, tokens, itoken, &attrib->accessor);
-		++customCount;
+		--customCount;
 
-		if (result)
-			break;
 		itoken = tokens[itoken].sibling;
 	}
 
@@ -129,6 +128,9 @@ gltf_mesh_parse_primitive(gltf_t* gltf, const char* buffer, json_token_t* tokens
 	}
 
 	primitive->mode = GLTF_TRIANGLES;
+
+	for (int iattrib = 0; iattrib < GLTF_ATTRIBUTE_COUNT; ++iattrib)
+		primitive->attributes[iattrib] = GLTF_INVALID_INDEX;
 
 	int result = 0;
 	itoken = tokens[itoken].child;
