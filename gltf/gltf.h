@@ -23,6 +23,7 @@
 #include <gltf/extension.h>
 #include <gltf/node.h>
 #include <gltf/scene.h>
+#include <gltf/stream.h>
 #include <gltf/material.h>
 #include <gltf/mesh.h>
 

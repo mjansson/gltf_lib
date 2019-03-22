@@ -17,6 +17,7 @@
 #include <foundation/stream.h>
 #include <foundation/memory.h>
 #include <foundation/json.h>
+#include <foundation/path.h>
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
@@ -59,11 +60,13 @@ gltf_finalize(gltf_t* gltf) {
 		gltf_materials_finalize(gltf);
 		gltf_nodes_finalize(gltf);
 		gltf_scenes_finalize(gltf);
+		gltf_buffer_views_finalize(gltf);
 		gltf_buffers_finalize(gltf);
 		gltf_accessors_finalize(gltf);
 		memory_deallocate(gltf->extensions_used);
 		memory_deallocate(gltf->extensions_required);
 		memory_deallocate(gltf->buffer);
+		string_deallocate(gltf->base_path.str);
 	}
 }
 
@@ -311,8 +314,12 @@ glb_read(gltf_t* gltf, stream_t* stream) {
 int
 gltf_read(gltf_t* gltf, stream_t* stream) {
 	stream_set_byteorder(stream, BYTEORDER_LITTLEENDIAN);
-
 	ssize_t stream_offset = stream_tell(stream);
+
+	string_deallocate(gltf->base_path.str);
+	string_const_t path = stream_path(stream);
+	path = path_directory_name(STRING_ARGS(path));
+	gltf->base_path = string_clone(STRING_ARGS(path));
 
 	gltf_glb_header_t glb_header;
 	if (stream_read(stream, &glb_header, sizeof(glb_header)) != sizeof(glb_header))

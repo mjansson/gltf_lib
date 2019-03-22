@@ -277,6 +277,7 @@ struct gltf_glb_header_t {
 };
 
 struct gltf_t {
+	string_t                base_path;
 	void*                   buffer;
 	gltf_asset_t            asset;
 	unsigned int            num_extension_used;
