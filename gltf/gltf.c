@@ -7,7 +7,8 @@
  *
  * https://github.com/rampantpixels/gltf_lib
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -37,8 +38,7 @@ gltf_module_is_initialized(void) {
 }
 
 void
-gltf_module_parse_config(const char* path, size_t path_size,
-                         const char* buffer, size_t size,
+gltf_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
                          const struct json_token_t* tokens, size_t num_tokens) {
 	FOUNDATION_UNUSED(path);
 	FOUNDATION_UNUSED(path_size);
@@ -99,8 +99,7 @@ gltf_token_to_boolean(const gltf_t* gltf, const char* buffer, json_token_t* toke
 }
 
 int
-gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                     double* value) {
+gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* value) {
 	FOUNDATION_UNUSED(gltf);
 	if (!itoken || ((tokens[itoken].type != JSON_STRING) && (tokens[itoken].type != JSON_PRIMITIVE))) {
 		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Integer attribute has invalid type"));
@@ -109,6 +108,23 @@ gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 
 	string_const_t strval = json_token_value(buffer, tokens + itoken);
 	*value = string_to_float64(STRING_ARGS(strval));
+	return 0;
+}
+
+int
+gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                            unsigned int* values, unsigned int dim) {
+	if (!itoken || (tokens[itoken].type != JSON_ARRAY) || (tokens[itoken].value_length != dim)) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Integer array attribute has invalid type"));
+		return -1;
+	}
+
+	itoken = tokens[itoken].child;
+	for (unsigned int ielem = 0; ielem < dim; ++ielem) {
+		if (gltf_token_to_integer(gltf, buffer, tokens, itoken, values + ielem))
+			return -1;
+		itoken = tokens[itoken].sibling;
+	}
 	return 0;
 }
 
@@ -184,8 +200,8 @@ gltf_parse_asset(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t 
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if ((identifier_hash == HASH_GENERATOR) && (tokens[itoken].type == JSON_STRING))
 			gltf->asset.generator = json_token_value(buffer, tokens + itoken);
-		else if ((identifier_hash == HASH_VERSION) && ((tokens[itoken].type == JSON_STRING) ||
-		                                               (tokens[itoken].type == JSON_PRIMITIVE)))
+		else if ((identifier_hash == HASH_VERSION) &&
+		         ((tokens[itoken].type == JSON_STRING) || (tokens[itoken].type == JSON_PRIMITIVE)))
 			gltf->asset.version = json_token_value(buffer, tokens + itoken);
 
 		itoken = tokens[itoken].sibling;
@@ -275,8 +291,7 @@ gltf_parse_scenes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 	size_t storage_size = sizeof(gltf_scene_t) * num_scenes;
 	gltf_scenes_finalize(gltf);
 	gltf->num_scenes = (unsigned int)num_scenes;
-	gltf->scenes = memory_allocate(HASH_GLTF, storage_size, 0,
-	                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->scenes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	int result = 0;
 	unsigned int icounter = 0;
@@ -339,8 +354,8 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 	size_t itoken = 0;
 	size_t num_tokens = 0;
 	size_t token_capacity = capacity / 16;
-	json_token_t* tokens = memory_allocate(HASH_GLTF, sizeof(json_token_t) * token_capacity, 0,
-	                                       MEMORY_TEMPORARY);
+	json_token_t* tokens =
+	    memory_allocate(HASH_GLTF, sizeof(json_token_t) * token_capacity, 0, MEMORY_TEMPORARY);
 
 	if (stream_read(stream, gltf->buffer, capacity) != capacity)
 		goto exit;
@@ -403,8 +418,8 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 		log_infof(HASH_GLTF, STRING_CONST("  %u nodes"), gltf->num_nodes);
 		for (unsigned int inode = 0; inode < gltf->num_nodes; ++inode) {
 			gltf_node_t* node = gltf->nodes + inode;
-			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" mesh %d"), inode,
-			          STRING_FORMAT(node->name), (int)node->mesh);
+			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" mesh %d"), inode, STRING_FORMAT(node->name),
+			          (int)node->mesh);
 		}
 		log_infof(HASH_GLTF, STRING_CONST("  %u meshes"), gltf->num_meshes);
 		for (unsigned int imesh = 0; imesh < gltf->num_meshes; ++imesh) {
@@ -413,12 +428,11 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			          STRING_FORMAT(mesh->name), (int)mesh->num_primitives);
 			for (unsigned int iprim = 0; iprim < mesh->num_primitives; ++iprim) {
 				gltf_primitive_t* prim = mesh->primitives + iprim;
-				log_infof(HASH_GLTF, STRING_CONST("      %u: type %d material %d"), iprim,
-				          prim->mode, prim->material);
+				log_infof(HASH_GLTF, STRING_CONST("      %u: type %d material %d"), iprim, prim->mode,
+				          prim->material);
 			}
 		}
-	}
-	else {
+	} else {
 		log_infof(HASH_GLTF, STRING_CONST("Failed reading glTF file: %d"), result);
 	}
 

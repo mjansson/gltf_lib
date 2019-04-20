@@ -7,7 +7,8 @@
  *
  * https://github.com/rampantpixels/gltf_lib
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -22,6 +23,11 @@
 void
 gltf_nodes_finalize(gltf_t* gltf) {
 	if (gltf->nodes) {
+		for (unsigned int inode = 0; inode < gltf->num_nodes; ++inode) {
+			gltf_node_t* node = gltf->nodes + inode;
+			if (node->children != node->base_children)
+				memory_deallocate(node->children);
+		}
 		memory_deallocate(gltf->nodes);
 	}
 }
@@ -37,11 +43,14 @@ gltf_transform_initialize(gltf_transform_t* transform) {
 	transform->matrix[1][1] = 1.0;
 	transform->matrix[2][2] = 1.0;
 	transform->matrix[3][3] = 1.0;
+	transform->has_matrix = false;
 }
 
 static void
 gltf_node_initialize(gltf_node_t* node) {
 	node->mesh = GLTF_INVALID_INDEX;
+	node->num_children = 0;
+	node->children = node->base_children;
 
 	gltf_transform_initialize(&node->transform);
 }
@@ -61,21 +70,29 @@ gltf_nodes_parse_node(gltf_t* gltf, const char* data, json_token_t* tokens, size
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if ((identifier_hash == HASH_NAME) && (tokens[itoken].type == JSON_STRING))
 			node->name = json_token_value(data, tokens + itoken);
-		else if (identifier_hash == HASH_MESH)
+		else if (identifier_hash == HASH_CHILDREN) {
+			node->num_children = tokens[itoken].value_length;
+			if (node->num_children > GLTF_NODE_BASE_CHILDREN)
+				node->children = memory_allocate(HASH_GLTF, sizeof(unsigned int) * node->num_children, 0,
+				                                 MEMORY_PERSISTENT);
+			result =
+			    gltf_token_to_integer_array(gltf, data, tokens, itoken, node->children, node->num_children);
+		} else if (identifier_hash == HASH_MESH)
 			result = gltf_token_to_integer(gltf, data, tokens, itoken, &node->mesh);
 		else if (identifier_hash == HASH_SCALE)
-			result = gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.scale,
-			                                    3);
+			result =
+			    gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.scale, 3);
 		else if (identifier_hash == HASH_ROTATION)
-			result = gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.rotation,
-			                                    4);
+			result =
+			    gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.rotation, 4);
 		else if (identifier_hash == HASH_TRANSLATION)
 			result = gltf_token_to_double_array(gltf, data, tokens, itoken,
 			                                    (double*)node->transform.translation, 3);
-		else if (identifier_hash == HASH_MATRIX)
-			result = gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.matrix,
-			                                    16);
-		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
+		else if (identifier_hash == HASH_MATRIX) {
+			node->transform.has_matrix = true;
+			result =
+			    gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.matrix, 16);
+		} else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
 			node->extensions = json_token_value(data, tokens + itoken);
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
 			node->extras = json_token_value(data, tokens + itoken);
@@ -104,8 +121,7 @@ gltf_nodes_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t it
 	size_t storage_size = sizeof(gltf_node_t) * num_nodes;
 	gltf_nodes_finalize(gltf);
 	gltf->num_nodes = (unsigned int)num_nodes;
-	gltf->nodes = memory_allocate(HASH_GLTF, storage_size, 0,
-	                              MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->nodes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	int result = 0;
 	unsigned int icounter = 0;

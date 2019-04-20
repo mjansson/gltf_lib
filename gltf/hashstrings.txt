@@ -23,6 +23,7 @@ HASH_ROTATION                           rotation
 HASH_TRANSLATION                        translation
 HASH_MATRIX                             matrix
 HASH_INDEX                              index
+HASH_CHILDREN                           children
 HASH_STRENGTH                           strength
 HASH_TEXCOORD                           texCoord
 HASH_EMISSIVETEXTURE                    emissiveTexture

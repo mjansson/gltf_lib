@@ -30,6 +30,7 @@
 #define HASH_TRANSLATION static_hash_string("translation", 11, 0xde38ab5fd173e0b4ULL)
 #define HASH_MATRIX static_hash_string("matrix", 6, 0x6e4bbc78661f98bcULL)
 #define HASH_INDEX static_hash_string("index", 5, 0x6ac0be7c69a9f89dULL)
+#define HASH_CHILDREN static_hash_string("children", 8, 0xf72c5233c9e13e9aULL)
 #define HASH_STRENGTH static_hash_string("strength", 8, 0xb523aa770cbbb904ULL)
 #define HASH_TEXCOORD static_hash_string("texCoord", 8, 0x30ff22b02f1c2483ULL)
 #define HASH_EMISSIVETEXTURE static_hash_string("emissiveTexture", 15, 0x76f0e7aa1cc87ff3ULL)

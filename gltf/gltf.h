@@ -7,7 +7,8 @@
  *
  * https://github.com/rampantpixels/gltf_lib
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -52,8 +53,7 @@ gltf_module_version(void);
 \param tokens JSON tokens
 \param num_tokens Number of JSON tokens */
 GLTF_API void
-gltf_module_parse_config(const char* path, size_t path_size,
-                         const char* buffer, size_t size,
+gltf_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
                          const struct json_token_t* tokens, size_t num_tokens);
 
 /*! Initialize glTF data structure
@@ -84,8 +84,11 @@ gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* toke
                       unsigned int* value);
 
 int
-gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                     double* value);
+gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* value);
+
+int
+gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                            unsigned int* values, unsigned int dim);
 
 int
 gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
