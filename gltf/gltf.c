@@ -58,8 +58,10 @@ gltf_finalize(gltf_t* gltf) {
 	if (gltf) {
 		gltf_meshes_finalize(gltf);
 		gltf_materials_finalize(gltf);
+		gltf_textures_finalize(gltf);
 		gltf_nodes_finalize(gltf);
 		gltf_scenes_finalize(gltf);
+		gltf_images_finalize(gltf);
 		gltf_buffer_views_finalize(gltf);
 		gltf_buffers_finalize(gltf);
 		gltf_accessors_finalize(gltf);
@@ -74,8 +76,10 @@ int
 gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                       unsigned int* value) {
 	FOUNDATION_UNUSED(gltf);
-	if (!itoken || ((tokens[itoken].type != JSON_PRIMITIVE) && (tokens[itoken].type != JSON_STRING))) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Integer attribute has invalid type"));
+	if (!itoken ||
+	    ((tokens[itoken].type != JSON_PRIMITIVE) && (tokens[itoken].type != JSON_STRING))) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Integer attribute has invalid type"));
 		return -1;
 	}
 
@@ -88,8 +92,10 @@ int
 gltf_token_to_boolean(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                       bool* value) {
 	FOUNDATION_UNUSED(gltf);
-	if (!itoken || ((tokens[itoken].type != JSON_PRIMITIVE) && (tokens[itoken].type != JSON_STRING))) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Boolean attribute has invalid type"));
+	if (!itoken ||
+	    ((tokens[itoken].type != JSON_PRIMITIVE) && (tokens[itoken].type != JSON_STRING))) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Boolean attribute has invalid type"));
 		return -1;
 	}
 
@@ -99,10 +105,13 @@ gltf_token_to_boolean(const gltf_t* gltf, const char* buffer, json_token_t* toke
 }
 
 int
-gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* value) {
+gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                     double* value) {
 	FOUNDATION_UNUSED(gltf);
-	if (!itoken || ((tokens[itoken].type != JSON_STRING) && (tokens[itoken].type != JSON_PRIMITIVE))) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Integer attribute has invalid type"));
+	if (!itoken ||
+	    ((tokens[itoken].type != JSON_STRING) && (tokens[itoken].type != JSON_PRIMITIVE))) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Integer attribute has invalid type"));
 		return -1;
 	}
 
@@ -114,13 +123,15 @@ gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 int
 gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                             unsigned int* values, unsigned int dim) {
-	if (!itoken || (tokens[itoken].type != JSON_ARRAY) || (tokens[itoken].value_length != dim)) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Integer array attribute has invalid type"));
+	unsigned int array_dim = tokens[itoken].value_length;
+	if (!itoken || (tokens[itoken].type != JSON_ARRAY) || (array_dim > dim)) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Integer array attribute has invalid type"));
 		return -1;
 	}
 
 	itoken = tokens[itoken].child;
-	for (unsigned int ielem = 0; ielem < dim; ++ielem) {
+	for (unsigned int ielem = 0; ielem < array_dim; ++ielem) {
 		if (gltf_token_to_integer(gltf, buffer, tokens, itoken, values + ielem))
 			return -1;
 		itoken = tokens[itoken].sibling;
@@ -131,13 +142,15 @@ gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* toke
 int
 gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                            double* values, unsigned int dim) {
-	if (!itoken || (tokens[itoken].type != JSON_ARRAY) || (tokens[itoken].value_length != dim)) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Double array attribute has invalid type"));
+	unsigned int array_dim = tokens[itoken].value_length;
+	if (!itoken || (tokens[itoken].type != JSON_ARRAY) || (array_dim > dim)) {
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Double array attribute has invalid type"));
 		return -1;
 	}
 
 	itoken = tokens[itoken].child;
-	for (unsigned int ielem = 0; ielem < dim; ++ielem) {
+	for (unsigned int ielem = 0; ielem < array_dim; ++ielem) {
 		if (gltf_token_to_double(gltf, buffer, tokens, itoken, values + ielem))
 			return -1;
 		itoken = tokens[itoken].sibling;
@@ -146,8 +159,8 @@ gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* token
 }
 
 int
-gltf_token_to_component_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                             gltf_component_type* value) {
+gltf_token_to_component_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens,
+                             size_t itoken, gltf_component_type* value) {
 	unsigned int intval = 0;
 	int result = gltf_token_to_integer(gltf, buffer, tokens, itoken, &intval);
 	if (!result)
@@ -160,7 +173,8 @@ gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* to
                         gltf_data_type* value) {
 	FOUNDATION_UNUSED(gltf);
 	if (!itoken || (tokens[itoken].type != JSON_STRING)) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Data type attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Data type attribute has invalid type"));
 		return -1;
 	}
 
@@ -181,7 +195,8 @@ gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* to
 	else if (strhash == HASH_MAT4)
 		*value = GLTF_DATA_MAT4;
 	else {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Data type attribute has invalid value"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Data type attribute has invalid value"));
 		return -1;
 	}
 	return 0;
@@ -190,7 +205,8 @@ gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* to
 static int
 gltf_parse_asset(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
 	if (tokens[itoken].type != JSON_OBJECT) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main asset attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Main asset attribute has invalid type"));
 		return -1;
 	}
 
@@ -215,7 +231,8 @@ gltf_parse_scene_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, s
                        gltf_scene_t* scene) {
 	FOUNDATION_UNUSED(gltf);
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Scene nodes attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Scene nodes attribute has invalid type"));
 		return -1;
 	}
 
@@ -226,7 +243,8 @@ gltf_parse_scene_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, s
 		return 0;
 
 	scene->num_nodes = (unsigned int)num_nodes;
-	scene->nodes = memory_allocate(HASH_GLTF, sizeof(unsigned int) * num_nodes, 0, MEMORY_PERSISTENT);
+	scene->nodes =
+	    memory_allocate(HASH_GLTF, sizeof(unsigned int) * num_nodes, 0, MEMORY_PERSISTENT);
 
 	unsigned int icounter = 0;
 	size_t inode = tokens[itoken].child;
@@ -278,7 +296,8 @@ gltf_parse_scenes_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, 
 static int
 gltf_parse_scenes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main scenes attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Main scenes attribute has invalid type"));
 		return -1;
 	}
 
@@ -291,7 +310,8 @@ gltf_parse_scenes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 	size_t storage_size = sizeof(gltf_scene_t) * num_scenes;
 	gltf_scenes_finalize(gltf);
 	gltf->num_scenes = (unsigned int)num_scenes;
-	gltf->scenes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->scenes =
+	    memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	int result = 0;
 	unsigned int icounter = 0;
@@ -310,7 +330,8 @@ gltf_parse_scenes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 static int
 gltf_parse_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
 	if ((tokens[itoken].type != JSON_STRING) && (tokens[itoken].type != JSON_PRIMITIVE)) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main scene attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Main scene attribute has invalid type"));
 		return -1;
 	}
 
@@ -396,6 +417,10 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			result = gltf_buffer_views_parse(gltf, gltf->buffer, tokens, itoken);
 		else if (identifier_hash == HASH_ACCESSORS)
 			result = gltf_accessors_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_TEXTURES)
+			result = gltf_textures_parse(gltf, gltf->buffer, tokens, itoken);
+		else if (identifier_hash == HASH_IMAGES)
+			result = gltf_images_parse(gltf, gltf->buffer, tokens, itoken);
 		else if (identifier_hash == HASH_EXTENSIONSUSED)
 			result = gltf_extensions_used_parse(gltf, gltf->buffer, tokens, itoken);
 		else if (identifier_hash == HASH_EXTENSIONSREQUIRED)
@@ -418,8 +443,8 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 		log_infof(HASH_GLTF, STRING_CONST("  %u nodes"), gltf->num_nodes);
 		for (unsigned int inode = 0; inode < gltf->num_nodes; ++inode) {
 			gltf_node_t* node = gltf->nodes + inode;
-			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" mesh %d"), inode, STRING_FORMAT(node->name),
-			          (int)node->mesh);
+			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" mesh %d"), inode,
+			          STRING_FORMAT(node->name), (int)node->mesh);
 		}
 		log_infof(HASH_GLTF, STRING_CONST("  %u meshes"), gltf->num_meshes);
 		for (unsigned int imesh = 0; imesh < gltf->num_meshes; ++imesh) {
@@ -428,10 +453,12 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			          STRING_FORMAT(mesh->name), (int)mesh->num_primitives);
 			for (unsigned int iprim = 0; iprim < mesh->num_primitives; ++iprim) {
 				gltf_primitive_t* prim = mesh->primitives + iprim;
-				log_infof(HASH_GLTF, STRING_CONST("      %u: type %d material %d"), iprim, prim->mode,
-				          prim->material);
+				log_infof(HASH_GLTF, STRING_CONST("      %u: type %d material %d"), iprim,
+				          prim->mode, prim->material);
 			}
 		}
+		log_infof(HASH_GLTF, STRING_CONST("  %u textures"), gltf->num_textures);
+		log_infof(HASH_GLTF, STRING_CONST("  %u images"), gltf->num_images);
 	} else {
 		log_infof(HASH_GLTF, STRING_CONST("Failed reading glTF file: %d"), result);
 	}

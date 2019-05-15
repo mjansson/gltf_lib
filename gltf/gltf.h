@@ -27,6 +27,8 @@
 #include <gltf/stream.h>
 #include <gltf/material.h>
 #include <gltf/mesh.h>
+#include <gltf/image.h>
+#include <gltf/texture.h>
 
 /*! Initialize glTF library
     \return 0 if success, <0 if error */
@@ -84,7 +86,8 @@ gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* toke
                       unsigned int* value);
 
 int
-gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* value);
+gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                     double* value);
 
 int
 gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
@@ -103,8 +106,8 @@ gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* to
                         gltf_data_type* value);
 
 int
-gltf_token_to_component_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                             gltf_component_type* value);
+gltf_token_to_component_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens,
+                             size_t itoken, gltf_component_type* value);
 
 int
 gltf_token_to_boolean(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,

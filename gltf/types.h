@@ -102,6 +102,7 @@ typedef struct gltf_buffer_t gltf_buffer_t;
 typedef struct gltf_buffer_view_t gltf_buffer_view_t;
 typedef struct gltf_config_t gltf_config_t;
 typedef struct gltf_glb_header_t gltf_glb_header_t;
+typedef struct gltf_image_t gltf_image_t;
 typedef struct gltf_material_t gltf_material_t;
 typedef struct gltf_mesh_t gltf_mesh_t;
 typedef struct gltf_node_t gltf_node_t;
@@ -111,6 +112,7 @@ typedef struct gltf_scene_t gltf_scene_t;
 typedef struct gltf_sparse_indices_t gltf_sparse_indices_t;
 typedef struct gltf_sparse_values_t gltf_sparse_values_t;
 typedef struct gltf_texture_info_t gltf_texture_info_t;
+typedef struct gltf_texture_t gltf_texture_t;
 typedef struct gltf_transform_t gltf_transform_t;
 
 typedef enum gltf_component_type gltf_component_type;
@@ -155,8 +157,8 @@ struct gltf_accessor_t {
 	gltf_component_type component_type;
 	unsigned int count;
 	bool normalized;
-	double min[3];
-	double max[3];
+	double min[4];
+	double max[4];
 	gltf_accessor_sparse_t sparse;
 	string_const_t extensions;
 	string_const_t extras;
@@ -264,6 +266,23 @@ struct gltf_material_t {
 	string_const_t extras;
 };
 
+struct gltf_image_t {
+	string_const_t name;
+	string_const_t uri;
+	string_const_t mime_type;
+	unsigned int buffer_view;
+	string_const_t extensions;
+	string_const_t extras;
+};
+
+struct gltf_texture_t {
+	string_const_t name;
+	unsigned int sampler;
+	unsigned int source;
+	string_const_t extensions;
+	string_const_t extras;
+};
+
 struct gltf_scene_t {
 	string_const_t name;
 	unsigned int* nodes;
@@ -301,4 +320,8 @@ struct gltf_t {
 	unsigned int num_materials;
 	gltf_mesh_t* meshes;
 	unsigned int num_meshes;
+	gltf_texture_t* textures;
+	unsigned int num_textures;
+	gltf_image_t* images;
+	unsigned int num_images;
 };

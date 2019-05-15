@@ -7,7 +7,8 @@
  *
  * https://github.com/rampantpixels/gltf_lib
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -43,7 +44,8 @@ static int
 gltf_material_parse_textureinfo(gltf_t* gltf, const char* buffer, json_token_t* tokens,
                                 size_t itoken, gltf_texture_info_t* texture) {
 	if (tokens[itoken].type != JSON_OBJECT) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Texture info attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Texture info attribute has invalid type"));
 		return -1;
 	}
 
@@ -81,7 +83,8 @@ gltf_material_parse_occlusiontexture(gltf_t* gltf, const char* buffer, json_toke
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if (identifier_hash == HASH_STRENGTH)
-			result = gltf_token_to_double(gltf, buffer, tokens, itoken, &material->occlusion_strength);
+			result =
+			    gltf_token_to_double(gltf, buffer, tokens, itoken, &material->occlusion_strength);
 
 		if (result)
 			break;
@@ -115,7 +118,8 @@ gltf_material_parse_normaltexture(gltf_t* gltf, const char* buffer, json_token_t
 
 static int
 gltf_material_parse_pbrmetallicroughness(gltf_t* gltf, const char* buffer, json_token_t* tokens,
-                                         size_t itoken, gltf_pbr_metallic_roughness_t* metallic_roughness) {
+                                         size_t itoken,
+                                         gltf_pbr_metallic_roughness_t* metallic_roughness) {
 	if (tokens[itoken].type != JSON_OBJECT)
 		return -1;
 
@@ -132,8 +136,8 @@ gltf_material_parse_pbrmetallicroughness(gltf_t* gltf, const char* buffer, json_
 			result = gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken,
 			                                         &metallic_roughness->base_color_texture);
 		else if (identifier_hash == HASH_METALLICROUGHNESSTEXTURE)
-			result = gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken,
-			                                         &metallic_roughness->metallic_roughness_texture);
+			result = gltf_material_parse_textureinfo(
+			    gltf, buffer, tokens, itoken, &metallic_roughness->metallic_roughness_texture);
 		else if (identifier_hash == HASH_BASECOLORFACTOR)
 			result = gltf_token_to_double_array(gltf, buffer, tokens, itoken,
 			                                    (double*)metallic_roughness->base_color_factor, 4);
@@ -172,7 +176,8 @@ gltf_materials_parse_material(gltf_t* gltf, const char* buffer, json_token_t* to
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
 			material->extras = json_token_value(buffer, tokens + itoken);
 		else if (identifier_hash == HASH_EMISSIVETEXTURE)
-			result = gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken, &material->emissive_texture);
+			result = gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken,
+			                                         &material->emissive_texture);
 		else if (identifier_hash == HASH_EMISSIVEFACTOR)
 			result = gltf_token_to_double_array(gltf, buffer, tokens, itoken,
 			                                    (double*)material->emissive_factor, 3);
@@ -209,17 +214,18 @@ gltf_materials_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 	size_t storage_size = sizeof(gltf_material_t) * num_materials;
 	gltf_materials_finalize(gltf);
 	gltf->num_materials = (unsigned int)num_materials;
-	gltf->materials = memory_allocate(HASH_GLTF, storage_size, 0,
-	                                  MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->materials =
+	    memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	int result = 0;
 	unsigned int icounter = 0;
-	size_t iscene = tokens[itoken].child;
-	while (iscene) {
-		result = gltf_materials_parse_material(gltf, buffer, tokens, iscene, gltf->materials + icounter);
+	size_t imat = tokens[itoken].child;
+	while (imat) {
+		result =
+		    gltf_materials_parse_material(gltf, buffer, tokens, imat, gltf->materials + icounter);
 		if (result)
 			break;
-		iscene = tokens[iscene].sibling;
+		imat = tokens[imat].sibling;
 		++icounter;
 	}
 

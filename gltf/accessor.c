@@ -7,7 +7,8 @@
  *
  * https://github.com/rampantpixels/gltf_lib
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -32,8 +33,8 @@ gltf_accessor_initialize(gltf_accessor_t* accessor) {
 }
 
 static int
-gltf_accessor_parse_sparse_indices(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken,
-                                   gltf_sparse_indices_t* indices) {
+gltf_accessor_parse_sparse_indices(gltf_t* gltf, const char* data, json_token_t* tokens,
+                                   size_t itoken, gltf_sparse_indices_t* indices) {
 	if (tokens[itoken].type != JSON_OBJECT) {
 		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
 		          STRING_CONST("Accessor sparse indices attribute has invalid type"));
@@ -50,12 +51,13 @@ gltf_accessor_parse_sparse_indices(gltf_t* gltf, const char* data, json_token_t*
 		else if (identifier_hash == HASH_BYTEOFFSET)
 			result = gltf_token_to_integer(gltf, data, tokens, itoken, &indices->byte_offset);
 		else if (identifier_hash == HASH_COMPONENTTYPE)
-			result = gltf_token_to_component_type(gltf, data, tokens, itoken, &indices->component_type);
+			result =
+			    gltf_token_to_component_type(gltf, data, tokens, itoken, &indices->component_type);
 		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
 			indices->extensions = json_token_value(data, tokens + itoken);
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
 			indices->extras = json_token_value(data, tokens + itoken);
-	
+
 		itoken = tokens[itoken].sibling;
 	}
 
@@ -63,8 +65,8 @@ gltf_accessor_parse_sparse_indices(gltf_t* gltf, const char* data, json_token_t*
 }
 
 static int
-gltf_accessor_parse_sparse_values(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken,
-                                   gltf_sparse_values_t* values) {
+gltf_accessor_parse_sparse_values(gltf_t* gltf, const char* data, json_token_t* tokens,
+                                  size_t itoken, gltf_sparse_values_t* values) {
 	if (tokens[itoken].type != JSON_OBJECT) {
 		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
 		          STRING_CONST("Accessor sparse vaöies attribute has invalid type"));
@@ -84,7 +86,7 @@ gltf_accessor_parse_sparse_values(gltf_t* gltf, const char* data, json_token_t* 
 			values->extensions = json_token_value(data, tokens + itoken);
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
 			values->extras = json_token_value(data, tokens + itoken);
-	
+
 		itoken = tokens[itoken].sibling;
 	}
 
@@ -108,14 +110,15 @@ gltf_accessor_parse_sparse(gltf_t* gltf, const char* data, json_token_t* tokens,
 		if (identifier_hash == HASH_COUNT)
 			result = gltf_token_to_integer(gltf, data, tokens, itoken, &sparse->count);
 		else if (identifier_hash == HASH_INDICES)
-			result = gltf_accessor_parse_sparse_indices(gltf, data, tokens, itoken, &sparse->indices);
+			result =
+			    gltf_accessor_parse_sparse_indices(gltf, data, tokens, itoken, &sparse->indices);
 		else if (identifier_hash == HASH_VALUES)
 			result = gltf_accessor_parse_sparse_values(gltf, data, tokens, itoken, &sparse->values);
 		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
 			sparse->extensions = json_token_value(data, tokens + itoken);
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
 			sparse->extras = json_token_value(data, tokens + itoken);
-	
+
 		itoken = tokens[itoken].sibling;
 	}
 
@@ -145,7 +148,8 @@ gltf_accessors_parse_accessor(gltf_t* gltf, const char* data, json_token_t* toke
 		else if (identifier_hash == HASH_BYTEOFFSET)
 			result = gltf_token_to_integer(gltf, data, tokens, itoken, &accessor->byte_offset);
 		else if (identifier_hash == HASH_COMPONENTTYPE)
-			result = gltf_token_to_component_type(gltf, data, tokens, itoken, &accessor->component_type);
+			result =
+			    gltf_token_to_component_type(gltf, data, tokens, itoken, &accessor->component_type);
 		else if (identifier_hash == HASH_NORMALIZED)
 			result = gltf_token_to_boolean(gltf, data, tokens, itoken, &accessor->normalized);
 		else if (identifier_hash == HASH_COUNT)
@@ -153,9 +157,9 @@ gltf_accessors_parse_accessor(gltf_t* gltf, const char* data, json_token_t* toke
 		else if (identifier_hash == HASH_TYPE)
 			result = gltf_token_to_data_type(gltf, data, tokens, itoken, &accessor->type);
 		else if (identifier_hash == HASH_MIN)
-			result = gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->max, 3);
+			result = gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->max, 4);
 		else if (identifier_hash == HASH_MAX)
-			result = gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->max, 3);
+			result = gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->max, 4);
 		else if (identifier_hash == HASH_SPARSE)
 			result = gltf_accessor_parse_sparse(gltf, data, tokens, itoken, &accessor->sparse);
 		else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
@@ -192,7 +196,8 @@ gltf_accessors_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_
 	unsigned int icounter = 0;
 	size_t iscene = tokens[itoken].child;
 	while (iscene) {
-		result = gltf_accessors_parse_accessor(gltf, data, tokens, iscene, gltf->accessors + icounter);
+		result =
+		    gltf_accessors_parse_accessor(gltf, data, tokens, iscene, gltf->accessors + icounter);
 		if (result)
 			break;
 		iscene = tokens[iscene].sibling;

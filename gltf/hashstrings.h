@@ -80,3 +80,5 @@
 #define HASH_MAT2 static_hash_string("MAT2", 4, 0x88148955a3c8b23bULL)
 #define HASH_MAT3 static_hash_string("MAT3", 4, 0x2e1a3dfae2dfef5ULL)
 #define HASH_MAT4 static_hash_string("MAT4", 4, 0xdcce7794b2edb38ULL)
+#define HASH_SAMPLER static_hash_string("sampler", 7, 0xe78480cabe1489bdULL)
+#define HASH_MIMETYPE static_hash_string("mimeType", 8, 0x999506a1a2f54b33ULL)
