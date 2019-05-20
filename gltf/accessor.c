@@ -157,7 +157,7 @@ gltf_accessors_parse_accessor(gltf_t* gltf, const char* data, json_token_t* toke
 		else if (identifier_hash == HASH_TYPE)
 			result = gltf_token_to_data_type(gltf, data, tokens, itoken, &accessor->type);
 		else if (identifier_hash == HASH_MIN)
-			result = gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->max, 4);
+			result = gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->min, 4);
 		else if (identifier_hash == HASH_MAX)
 			result = gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->max, 4);
 		else if (identifier_hash == HASH_SPARSE)
