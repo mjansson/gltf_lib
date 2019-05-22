@@ -181,7 +181,7 @@ gltf_stream_base64_tell(stream_t* stream) {
 
 static tick_t
 gltf_stream_base64_lastmod(const stream_t* stream) {
-	const gltf_stream_base64_t* gltf_stream = (gltf_stream_base64_t*)stream;
+	const gltf_stream_base64_t* gltf_stream = (const gltf_stream_base64_t*)stream;
 	return gltf_stream->lastmod;
 }
 
@@ -216,7 +216,7 @@ stream_t*
 gltf_stream_open(gltf_t* gltf, const char* uri, size_t length, unsigned int mode) {
 	if ((length > 5) && string_equal(uri, 5, STRING_CONST("data:"))) {
 		uri += 5;
-		length -= -5;
+		length -= 5;
 
 		string_const_t mime_type, encoding, data;
 		string_split(uri, length, STRING_CONST(";"), &mime_type, &encoding, false);
