@@ -22,14 +22,23 @@
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
+extern int
+gltf_module_stream_initialize(void);
+
+extern void
+gltf_module_stream_finalize(void);
+
 int
 gltf_module_initialize(gltf_config_t config) {
 	FOUNDATION_UNUSED(config);
+	if (gltf_module_stream_initialize())
+		return -1;
 	return 0;
 }
 
 void
 gltf_module_finalize(void) {
+	gltf_module_stream_finalize();
 }
 
 bool
