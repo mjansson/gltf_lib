@@ -79,7 +79,7 @@ gltf_read(gltf_t* gltf, stream_t* stream);
 \param gltf Source glTF data structure
 \param stream Target stream */
 GLTF_API int
-gltf_write(const gltf_t* gltf, stream_t* stream, gltf_write_mode write_mode);
+gltf_write(const gltf_t* gltf, stream_t* stream);
 
 int
 gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,

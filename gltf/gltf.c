@@ -78,6 +78,8 @@ gltf_finalize(gltf_t* gltf) {
 		memory_deallocate(gltf->extensions_required);
 		memory_deallocate(gltf->buffer);
 		string_deallocate(gltf->base_path.str);
+		memory_deallocate(gltf->binary_chunk.data);
+		string_deallocate(gltf->binary_chunk.uri.str);
 	}
 }
 
@@ -349,13 +351,6 @@ gltf_parse_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t 
 	return 0;
 }
 
-static int
-glb_read(gltf_t* gltf, stream_t* stream) {
-	FOUNDATION_UNUSED(gltf);
-	FOUNDATION_UNUSED(stream);
-	return -1;
-}
-
 int
 gltf_read(gltf_t* gltf, stream_t* stream) {
 	stream_set_byteorder(stream, BYTEORDER_LITTLEENDIAN);
@@ -370,32 +365,81 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 	if (stream_read(stream, &glb_header, sizeof(glb_header)) != sizeof(glb_header))
 		return -1;
 
-	if (glb_header.magic == 0x46546C67)
-		return glb_read(gltf, stream);
+	size_t json_size = 0;
+	if (glb_header.magic == 0x46546C67) {
+		if (glb_header.version != 2) {
+			log_warn(HASH_GLTF, WARNING_UNSUPPORTED, STRING_CONST("Unsupported GLB version"));
+			return -1;
+		}
 
-	stream_seek(stream, 0, STREAM_SEEK_END);
-	size_t capacity = stream_tell(stream) - stream_offset;
-	stream_seek(stream, stream_offset, STREAM_SEEK_BEGIN);
+		uint32_t chunk_length = stream_read_uint32(stream);
+		uint32_t chunk_type = stream_read_uint32(stream);
+		if (chunk_type != 0x4E4F534A) {
+			log_warn(HASH_GLTF, WARNING_INVALID_VALUE,
+			         STRING_CONST("Invalid GLB first chunk, expected JSON"));
+			return -1;
+		}
+		size_t max_size = stream_size(stream);
+		max_size = ((size_t)stream_offset < max_size) ? (max_size - stream_offset) : 0;
+		if (!chunk_length || (chunk_length % 4) || (max_size && (chunk_length >= max_size))) {
+			log_warn(HASH_GLTF, WARNING_INVALID_VALUE,
+			         STRING_CONST("Invalid GLB JSON chunk length"));
+			return -1;
+		}
+
+		json_size = chunk_length;
+		gltf->file_type = GLTF_FILE_GLB;
+	} else {
+		stream_seek(stream, 0, STREAM_SEEK_END);
+		json_size = stream_tell(stream) - stream_offset;
+		stream_seek(stream, stream_offset, STREAM_SEEK_BEGIN);
+		gltf->file_type = GLTF_FILE_GLTF;
+	}
+
+	int result = -1;
+	if (json_size > 0x7FFFFFFF) {
+		log_warn(HASH_GLTF, WARNING_INVALID_VALUE, STRING_CONST("Invalid glTF/GLB JSON length"));
+		return -1;
+	}
 
 	memory_deallocate(gltf->buffer);
-	gltf->buffer = memory_allocate(HASH_GLTF, capacity, 0, MEMORY_PERSISTENT);
-	int result = -1;
+	gltf->buffer = memory_allocate(HASH_GLTF, json_size, 0, MEMORY_PERSISTENT);
 
 	size_t itoken = 0;
 	size_t num_tokens = 0;
-	size_t token_capacity = capacity / 16;
+	size_t token_capacity = json_size / 10;
 	json_token_t* tokens =
 	    memory_allocate(HASH_GLTF, sizeof(json_token_t) * token_capacity, 0, MEMORY_TEMPORARY);
 
-	if (stream_read(stream, gltf->buffer, capacity) != capacity)
+	if (stream_read(stream, gltf->buffer, json_size) != json_size)
 		goto exit;
 
-	num_tokens = json_parse(gltf->buffer, capacity, tokens, token_capacity);
+	if (gltf->file_type = GLTF_FILE_GLB) {
+		// Check if we have an embedded data chunk
+		uint32_t chunk_length = stream_read_uint32(stream);
+		uint32_t chunk_type = stream_read_uint32(stream);
+		if ((chunk_type == 0x004E4942) && chunk_length) {
+			gltf->file_type = GLTF_FILE_GLB_EMBED;
+			gltf->binary_chunk.offset = stream_tell(stream);
+			gltf->binary_chunk.length = chunk_length;
+			if (stream->persistent && stream->reliable && stream->inorder && !stream->sequential) {
+				gltf->binary_chunk.uri = string_clone_string(stream_path(stream));
+				gltf->binary_chunk.data = nullptr;
+			} else {
+				gltf->binary_chunk.uri = string(0, 0);
+				gltf->binary_chunk.data =
+				    memory_allocate(HASH_GLTF, chunk_length, 0, MEMORY_PERSISTENT);
+				stream_read(stream, gltf->binary_chunk.data, chunk_length);
+			}
+		}
+	}
+
+	num_tokens = json_parse(gltf->buffer, json_size, tokens, token_capacity);
 	if (num_tokens > token_capacity) {
 		tokens = memory_reallocate(tokens, sizeof(json_token_t) * num_tokens, 0,
 		                           sizeof(json_token_t) * token_capacity, MEMORY_TEMPORARY);
 		token_capacity = num_tokens;
-		num_tokens = json_parse(gltf->buffer, capacity, tokens, token_capacity);
+		num_tokens = json_parse(gltf->buffer, json_size, tokens, token_capacity);
 		if (num_tokens > token_capacity)
 			goto exit;
 	}
@@ -441,7 +485,8 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 	}
 
 	if (result == 0) {
-		log_infof(HASH_GLTF, STRING_CONST("Read glTF file version %.*s - %.*s"),
+		log_infof(HASH_GLTF, STRING_CONST("Read %s file version %.*s - %.*s"),
+		          (gltf->file_type < GLTF_FILE_GLB) ? "glTF" : "GLB",
 		          STRING_FORMAT(gltf->asset.version), STRING_FORMAT(gltf->asset.generator));
 		log_infof(HASH_GLTF, STRING_CONST("  %u scenes"), gltf->num_scenes);
 		for (unsigned int iscene = 0; iscene < gltf->num_scenes; ++iscene) {
@@ -478,9 +523,8 @@ exit:
 }
 
 int
-gltf_write(const gltf_t* gltf, stream_t* stream, gltf_write_mode write_mode) {
+gltf_write(const gltf_t* gltf, stream_t* stream) {
 	FOUNDATION_UNUSED(gltf);
-	FOUNDATION_UNUSED(write_mode);
 
 	stream_set_byteorder(stream, BYTEORDER_LITTLEENDIAN);
 

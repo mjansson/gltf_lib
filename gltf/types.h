@@ -43,11 +43,11 @@
 #define GLTF_MAX_INDEX 0x7FFFFFFF
 #define GLTF_INVALID_INDEX 0xFFFFFFFF
 
-enum gltf_write_mode {
-	GLTF_WRITE_GLTF = 0,
-	GLTF_WRITE_GLTF_EMBED,
-	GLTF_WRITE_GLB,
-	GLTF_WRITE_GLB_EMBED,
+enum gltf_file_type {
+	GLTF_FILE_GLTF = 0,
+	GLTF_FILE_GLTF_EMBED,
+	GLTF_FILE_GLB,
+	GLTF_FILE_GLB_EMBED,
 };
 
 enum gltf_data_type {
@@ -114,10 +114,11 @@ typedef struct gltf_sparse_values_t gltf_sparse_values_t;
 typedef struct gltf_texture_info_t gltf_texture_info_t;
 typedef struct gltf_texture_t gltf_texture_t;
 typedef struct gltf_transform_t gltf_transform_t;
+typedef struct gltf_binary_chunk_t gltf_binary_chunk_t;
 
 typedef enum gltf_component_type gltf_component_type;
+typedef enum gltf_file_type gltf_file_type;
 typedef enum gltf_data_type gltf_data_type;
-typedef enum gltf_write_mode gltf_write_mode;
 typedef enum gltf_alpha_mode gltf_alpha_mode;
 typedef enum gltf_attribute gltf_attribute;
 typedef enum gltf_primitive_mode gltf_primitive_mode;
@@ -297,8 +298,17 @@ struct gltf_glb_header_t {
 	uint32_t length;
 };
 
+struct gltf_binary_chunk_t {
+	size_t offset;
+	size_t length;
+	string_t uri;
+	void* data;
+};
+
 struct gltf_t {
 	string_t base_path;
+	gltf_file_type file_type;
+	gltf_binary_chunk_t binary_chunk;
 	void* buffer;
 	gltf_asset_t asset;
 	unsigned int num_extension_used;
