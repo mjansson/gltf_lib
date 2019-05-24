@@ -31,9 +31,9 @@ HASH_EMISSIVEFACTOR                     emissiveFactor
 HASH_NORMALTEXTURE                      normalTexture
 HASH_OCCLUSIONTEXTURE                   occlusionTexture
 HASH_PBRMETALLICROUGHNESS               pbrMetallicRoughness
-HASH_BASECOLORTEXTURE                   basecolorTexture
+HASH_BASECOLORTEXTURE                   baseColorTexture
 HASH_METALLICROUGHNESSTEXTURE           metallicRoughnessTexture
-HASH_BASECOLORFACTOR                    basecolorFactor
+HASH_BASECOLORFACTOR                    baseColorFactor
 HASH_METALLICFACTOR                     metallicFactor
 HASH_ROUGHNESSFACTOR                    roughnessFactor
 HASH_PRIMITIVES                         primitives
