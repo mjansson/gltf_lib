@@ -71,44 +71,45 @@ gltf_finalize(gltf_t* gltf);
 /*! Read glTF or glb data
 \param gltf Target glTF data structure
 \param stream Source stream
-\return 0 if success, <0 if error */
-GLTF_API int
+\return true if success, false if error */
+GLTF_API bool
 gltf_read(gltf_t* gltf, stream_t* stream);
 
 /*! Write glTF or glb data
 \param gltf Source glTF data structure
-\param stream Target stream */
-GLTF_API int
+\param stream Target stream
+\return true if success, false if error */
+GLTF_API bool
 gltf_write(const gltf_t* gltf, stream_t* stream);
 
-int
+bool
 gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                       unsigned int* value);
 
-int
+bool
 gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                      double* value);
 
-int
+bool
 gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                             unsigned int* values, unsigned int dim);
 
-int
+bool
 gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                            double* values, unsigned int dim);
 
-int
+bool
 gltf_token_to_string_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                            string_const_t* values, unsigned int dim);
 
-int
+bool
 gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                         gltf_data_type* value);
 
-int
+bool
 gltf_token_to_component_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens,
                              size_t itoken, gltf_component_type* value);
 
-int
+bool
 gltf_token_to_boolean(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                       bool* value);

@@ -55,15 +55,14 @@ gltf_node_initialize(gltf_node_t* node) {
 	gltf_transform_initialize(&node->transform);
 }
 
-static int
+static bool
 gltf_nodes_parse_node(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken,
                       gltf_node_t* node) {
 	if (tokens[itoken].type != JSON_OBJECT)
-		return -1;
+		return false;
 
 	gltf_node_initialize(node);
 
-	int result = 0;
 	itoken = tokens[itoken].child;
 	while (itoken) {
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
@@ -73,66 +72,71 @@ gltf_nodes_parse_node(gltf_t* gltf, const char* data, json_token_t* tokens, size
 		else if (identifier_hash == HASH_CHILDREN) {
 			node->num_children = tokens[itoken].value_length;
 			if (node->num_children > GLTF_NODE_BASE_CHILDREN)
-				node->children = memory_allocate(HASH_GLTF, sizeof(unsigned int) * node->num_children, 0,
-				                                 MEMORY_PERSISTENT);
-			result =
-			    gltf_token_to_integer_array(gltf, data, tokens, itoken, node->children, node->num_children);
-		} else if (identifier_hash == HASH_MESH)
-			result = gltf_token_to_integer(gltf, data, tokens, itoken, &node->mesh);
-		else if (identifier_hash == HASH_SCALE)
-			result =
-			    gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.scale, 3);
-		else if (identifier_hash == HASH_ROTATION)
-			result =
-			    gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.rotation, 4);
-		else if (identifier_hash == HASH_TRANSLATION)
-			result = gltf_token_to_double_array(gltf, data, tokens, itoken,
-			                                    (double*)node->transform.translation, 3);
+				node->children = memory_allocate(
+				    HASH_GLTF, sizeof(unsigned int) * node->num_children, 0, MEMORY_PERSISTENT);
+			if (!gltf_token_to_integer_array(gltf, data, tokens, itoken, node->children,
+			                                 node->num_children))
+				return false;
+		} else if ((identifier_hash == HASH_MESH) &&
+		           !gltf_token_to_integer(gltf, data, tokens, itoken, &node->mesh))
+			return false;
+
+		else if ((identifier_hash == HASH_SCALE) &&
+		         !gltf_token_to_double_array(gltf, data, tokens, itoken,
+		                                     (double*)node->transform.scale, 3))
+			return false;
+		else if ((identifier_hash == HASH_ROTATION) &&
+		         !gltf_token_to_double_array(gltf, data, tokens, itoken,
+		                                     (double*)node->transform.rotation, 4))
+			return false;
+		else if ((identifier_hash == HASH_TRANSLATION) &&
+		         !gltf_token_to_double_array(gltf, data, tokens, itoken,
+		                                     (double*)node->transform.translation, 3))
+			return false;
 		else if (identifier_hash == HASH_MATRIX) {
 			node->transform.has_matrix = true;
-			result =
-			    gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.matrix, 16);
+			if (!gltf_token_to_double_array(gltf, data, tokens, itoken,
+			                                (double*)node->transform.matrix, 16))
+				return false;
 		} else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
 			node->extensions = json_token_value(data, tokens + itoken);
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
 			node->extras = json_token_value(data, tokens + itoken);
 
-		if (result)
-			break;
 		itoken = tokens[itoken].sibling;
 	}
 
-	return result;
+	return true;
 }
 
-int
+bool
 gltf_nodes_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken) {
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main nodes attribute has invalid type"));
-		return -1;
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
+		          STRING_CONST("Main nodes attribute has invalid type"));
+		return false;
 	}
 
 	size_t num_nodes = tokens[itoken].value_length;
 	if (num_nodes > GLTF_MAX_INDEX)
-		return -1;
+		return false;
 	if (!num_nodes)
-		return 0;
+		return true;
 
 	size_t storage_size = sizeof(gltf_node_t) * num_nodes;
 	gltf_nodes_finalize(gltf);
 	gltf->num_nodes = (unsigned int)num_nodes;
-	gltf->nodes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->nodes =
+	    memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	int result = 0;
 	unsigned int icounter = 0;
 	size_t iscene = tokens[itoken].child;
 	while (iscene) {
-		result = gltf_nodes_parse_node(gltf, data, tokens, iscene, gltf->nodes + icounter);
-		if (result)
-			break;
+		if (!gltf_nodes_parse_node(gltf, data, tokens, iscene, gltf->nodes + icounter))
+			return false;
 		iscene = tokens[iscene].sibling;
 		++icounter;
 	}
 
-	return result;
+	return true;
 }

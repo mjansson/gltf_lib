@@ -7,7 +7,8 @@
  *
  * https://github.com/rampantpixels/gltf_lib
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -18,11 +19,11 @@
 GLTF_API void
 gltf_buffers_finalize(gltf_t* gltf);
 
-GLTF_API int
+GLTF_API bool
 gltf_buffers_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken);
 
 GLTF_API void
 gltf_buffer_views_finalize(gltf_t* gltf);
 
-GLTF_API int
+GLTF_API bool
 gltf_buffer_views_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken);

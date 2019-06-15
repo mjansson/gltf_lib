@@ -19,5 +19,5 @@
 GLTF_API void
 gltf_textures_finalize(gltf_t* gltf);
 
-GLTF_API int
+GLTF_API bool
 gltf_textures_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken);
