@@ -276,7 +276,7 @@ gltf_stream_substream_seek(stream_t* stream, ssize_t offset, stream_seek_mode_t 
 		new_current = (offset < 0) ? gltf_stream->size - abs_offset : gltf_stream->size;
 
 	gltf_stream->current = (new_current < gltf_stream->size) ? new_current : gltf_stream->size;
-	stream_seek(gltf_stream->stream, gltf_stream->offset + gltf_stream->current, STREAM_SEEK_BEGIN);
+	stream_seek(gltf_stream->stream, (ssize_t)(gltf_stream->offset + gltf_stream->current), STREAM_SEEK_BEGIN);
 }
 
 static size_t
@@ -304,7 +304,7 @@ gltf_allocate_glb_substream(const char* path, size_t path_length, size_t offset,
 	stream_t* substream = stream_open(path, path_length, STREAM_IN | STREAM_BINARY);
 	if (!substream)
 		return nullptr;
-	stream_seek(substream, offset, STREAM_SEEK_BEGIN);
+	stream_seek(substream, (ssize_t)offset, STREAM_SEEK_BEGIN);
 
 	gltf_stream_substream_t* stream = memory_allocate(HASH_GLTF, sizeof(gltf_stream_substream_t), 8,
 	                                                  MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
