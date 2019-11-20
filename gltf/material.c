@@ -41,6 +41,20 @@ gltf_material_initialize(gltf_material_t* material) {
 }
 
 static bool
+gltf_material_parse_alphamode(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                              gltf_material_t* material) {
+	FOUNDATION_UNUSED(gltf);
+	string_const_t mode = json_token_value(buffer, tokens + itoken);
+	if (string_equal(STRING_ARGS(mode), STRING_CONST("OPAQUE")))
+		material->alpha_mode = GLTF_ALPHA_MODE_OPAQUE;
+	else if (string_equal(STRING_ARGS(mode), STRING_CONST("MASK")))
+		material->alpha_mode = GLTF_ALPHA_MODE_MASK;
+	else if (string_equal(STRING_ARGS(mode), STRING_CONST("BLEND")))
+		material->alpha_mode = GLTF_ALPHA_MODE_BLEND;
+	return true;
+}
+
+static bool
 gltf_material_parse_textureinfo(gltf_t* gltf, const char* buffer, json_token_t* tokens,
                                 size_t itoken, gltf_texture_info_t* texture) {
 	if (tokens[itoken].type != JSON_OBJECT) {
@@ -94,8 +108,7 @@ gltf_material_parse_occlusiontexture(gltf_t* gltf, const char* buffer, json_toke
 static bool
 gltf_material_parse_normaltexture(gltf_t* gltf, const char* buffer, json_token_t* tokens,
                                   size_t itoken, gltf_material_t* material) {
-	if (!gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken,
-	                                     &material->occlusion_texture))
+	if (!gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken, &material->normal_texture))
 		return false;
 
 	itoken = tokens[itoken].child;
@@ -172,6 +185,18 @@ gltf_materials_parse_material(gltf_t* gltf, const char* buffer, json_token_t* to
 			material->extensions = json_token_value(buffer, tokens + itoken);
 		else if ((identifier_hash == HASH_EXTRAS) && (tokens[itoken].type == JSON_STRING))
 			material->extras = json_token_value(buffer, tokens + itoken);
+		else if ((identifier_hash == HASH_ALPHAMODE) && (tokens[itoken].type == JSON_STRING))
+			gltf_material_parse_alphamode(gltf, buffer, tokens, itoken, material);
+		else if ((identifier_hash == HASH_ALPHACUTOFF) &&
+		         ((tokens[itoken].type == JSON_STRING) ||
+		          (tokens[itoken].type == JSON_PRIMITIVE)) &&
+		         !gltf_token_to_double(gltf, buffer, tokens, itoken, &material->alpha_cutoff))
+			return false;
+		else if ((identifier_hash == HASH_DOUBLESIDED) &&
+		         ((tokens[itoken].type == JSON_STRING) ||
+		          (tokens[itoken].type == JSON_PRIMITIVE)) &&
+		         !gltf_token_to_boolean(gltf, buffer, tokens, itoken, &material->double_sided))
+			return false;
 		else if ((identifier_hash == HASH_EMISSIVETEXTURE) &&
 		         !gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken,
 		                                          &material->emissive_texture))

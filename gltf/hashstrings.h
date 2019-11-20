@@ -82,3 +82,6 @@
 #define HASH_MAT4 static_hash_string("MAT4", 4, 0xdcce7794b2edb38ULL)
 #define HASH_SAMPLER static_hash_string("sampler", 7, 0xe78480cabe1489bdULL)
 #define HASH_MIMETYPE static_hash_string("mimeType", 8, 0x999506a1a2f54b33ULL)
+#define HASH_ALPHAMODE static_hash_string("alphaMode", 9, 0xfd1ad8147f10ef35ULL)
+#define HASH_ALPHACUTOFF static_hash_string("alphaCutoff", 11, 0x36e7c8b2abd4e22eULL)
+#define HASH_DOUBLESIDED static_hash_string("doubleSided", 11, 0x22e4f9459b2a7876ULL)

@@ -75,3 +75,6 @@ HASH_MAT3                               MAT3
 HASH_MAT4                               MAT4
 HASH_SAMPLER                            sampler
 HASH_MIMETYPE                           mimeType
+HASH_ALPHAMODE                          alphaMode
+HASH_ALPHACUTOFF                        alphaCutoff
+HASH_DOUBLESIDED                        doubleSided
