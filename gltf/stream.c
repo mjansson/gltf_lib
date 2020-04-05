@@ -1,11 +1,11 @@
-/* stream.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
+/* stream.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson
  *
  * This library provides a cross-platform glTF I/O library in C11 providing
  * glTF ascii/binary reading and writing functionality.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/gltf_lib
+ * https://github.com/mjansson/gltf_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -99,8 +99,8 @@ gltf_stream_base64_read(stream_t* stream, void* dest, size_t num) {
 				if (available > to_read)
 					available = to_read;
 
-				memcpy(pointer_offset(dest, was_read),
-				       pointer_offset(gltf_stream->buffer, gltf_stream->offset), available);
+				memcpy(pointer_offset(dest, was_read), pointer_offset(gltf_stream->buffer, gltf_stream->offset),
+				       available);
 				gltf_stream->offset += available;
 				gltf_stream->current += available;
 
@@ -111,8 +111,8 @@ gltf_stream_base64_read(stream_t* stream, void* dest, size_t num) {
 				gltf_stream->offset = 0;
 				if (!gltf_stream->buffer) {
 					gltf_stream->buffer_capacity = 3 * 10 * 1024;
-					gltf_stream->buffer = memory_allocate(HASH_GLTF, gltf_stream->buffer_capacity,
-					                                      32, MEMORY_PERSISTENT);
+					gltf_stream->buffer =
+					    memory_allocate(HASH_GLTF, gltf_stream->buffer_capacity, 32, MEMORY_PERSISTENT);
 				}
 
 				// Locate the correct byte triplet
@@ -121,21 +121,19 @@ gltf_stream_base64_read(stream_t* stream, void* dest, size_t num) {
 				size_t new_current = byte_triplet * 3;
 
 				FOUNDATION_ASSERT(gltf_stream->current >= new_current);
-				gltf_stream->offset =
-				    (gltf_stream->current > new_current) ? (gltf_stream->current - new_current) : 0;
+				gltf_stream->offset = (gltf_stream->current > new_current) ? (gltf_stream->current - new_current) : 0;
 				gltf_stream->current = new_current;
 				FOUNDATION_ASSERT(gltf_stream->offset <= 2);
 
-				gltf_stream->buffer_size = base64_decode(
-				    gltf_stream->source + source_offset, gltf_stream->source_length - source_offset,
-				    gltf_stream->buffer, gltf_stream->buffer_capacity);
+				gltf_stream->buffer_size =
+				    base64_decode(gltf_stream->source + source_offset, gltf_stream->source_length - source_offset,
+				                  gltf_stream->buffer, gltf_stream->buffer_capacity);
 
 				available = gltf_stream->buffer_size - gltf_stream->offset;
 			}
 		}
 
-		memcpy(pointer_offset(dest, was_read),
-		       pointer_offset(gltf_stream->buffer, gltf_stream->offset), to_read);
+		memcpy(pointer_offset(dest, was_read), pointer_offset(gltf_stream->buffer, gltf_stream->offset), to_read);
 		gltf_stream->offset += to_read;
 		gltf_stream->current += to_read;
 
@@ -167,8 +165,7 @@ gltf_stream_base64_seek(stream_t* stream, ssize_t offset, stream_seek_mode_t dir
 	size_t abs_offset = (size_t)((offset < 0) ? -offset : offset);
 	if (direction == STREAM_SEEK_CURRENT) {
 		if (offset < 0)
-			new_current =
-			    (abs_offset > gltf_stream->current) ? 0 : (gltf_stream->current - abs_offset);
+			new_current = (abs_offset > gltf_stream->current) ? 0 : (gltf_stream->current - abs_offset);
 		else
 			new_current = gltf_stream->current + abs_offset;
 	} else if (direction == STREAM_SEEK_BEGIN)
@@ -177,8 +174,7 @@ gltf_stream_base64_seek(stream_t* stream, ssize_t offset, stream_seek_mode_t dir
 		new_current = (offset < 0) ? gltf_stream->total_size - abs_offset : gltf_stream->total_size;
 
 	size_t buffer_start = gltf_stream->current - gltf_stream->offset;
-	if ((new_current < buffer_start) ||
-	    (new_current >= (buffer_start + gltf_stream->buffer_size))) {
+	if ((new_current < buffer_start) || (new_current >= (buffer_start + gltf_stream->buffer_size))) {
 		gltf_stream->offset = 0;
 		gltf_stream->buffer_size = 0;
 	} else {
@@ -211,13 +207,12 @@ gltf_stream_base64_available_read(stream_t* stream) {
 
 static stream_t*
 gltf_allocate_stream_base64(const char* data, size_t length, size_t unpacked_length) {
-	gltf_stream_base64_t* stream = memory_allocate(HASH_GLTF, sizeof(gltf_stream_base64_t), 8,
-	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf_stream_base64_t* stream =
+	    memory_allocate(HASH_GLTF, sizeof(gltf_stream_base64_t), 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	stream_initialize((stream_t*)stream, system_byteorder());
 
 	stream->type = STREAMTYPE_MEMORY;
-	stream->path =
-	    string_allocate_format(STRING_CONST("gltf-base64://0x%" PRIfixPTR), (uintptr_t)stream);
+	stream->path = string_allocate_format(STRING_CONST("gltf-base64://0x%" PRIfixPTR), (uintptr_t)stream);
 	stream->mode = STREAM_IN | STREAM_BINARY;
 	stream->lastmod = time_current();
 	stream->source = data;
@@ -266,8 +261,7 @@ gltf_stream_substream_seek(stream_t* stream, ssize_t offset, stream_seek_mode_t 
 	size_t abs_offset = (size_t)((offset < 0) ? -offset : offset);
 	if (direction == STREAM_SEEK_CURRENT) {
 		if (offset < 0)
-			new_current =
-			    (abs_offset > gltf_stream->current) ? 0 : (gltf_stream->current - abs_offset);
+			new_current = (abs_offset > gltf_stream->current) ? 0 : (gltf_stream->current - abs_offset);
 		else
 			new_current = gltf_stream->current + abs_offset;
 	} else if (direction == STREAM_SEEK_BEGIN)
@@ -306,8 +300,8 @@ gltf_allocate_glb_substream(const char* path, size_t path_length, size_t offset,
 		return nullptr;
 	stream_seek(substream, (ssize_t)offset, STREAM_SEEK_BEGIN);
 
-	gltf_stream_substream_t* stream = memory_allocate(HASH_GLTF, sizeof(gltf_stream_substream_t), 8,
-	                                                  MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf_stream_substream_t* stream =
+	    memory_allocate(HASH_GLTF, sizeof(gltf_stream_substream_t), 8, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	stream_initialize((stream_t*)stream, system_byteorder());
 
 	string_const_t subpath = stream_path(substream);
@@ -316,9 +310,8 @@ gltf_allocate_glb_substream(const char* path, size_t path_length, size_t offset,
 	stream->reliable = substream->reliable;
 	stream->sequential = substream->sequential;
 	stream->inorder = substream->inorder;
-	stream->path =
-	    string_allocate_format(STRING_CONST("gltf-substream://%" PRIsize ":%" PRIsize "@%.*s"),
-	                           offset, size, STRING_FORMAT(subpath));
+	stream->path = string_allocate_format(STRING_CONST("gltf-substream://%" PRIsize ":%" PRIsize "@%.*s"), offset, size,
+	                                      STRING_FORMAT(subpath));
 	stream->mode = STREAM_IN | STREAM_BINARY;
 	stream->offset = offset;
 	stream->size = size;
@@ -336,12 +329,10 @@ gltf_stream_open(gltf_t* gltf, const char* uri, size_t length, unsigned int mode
 			return nullptr;
 
 		if (gltf->binary_chunk.data)
-			return buffer_stream_allocate(gltf->binary_chunk.data, STREAM_IN | STREAM_BINARY,
-			                              gltf->binary_chunk.length, gltf->binary_chunk.length,
-			                              false, false);
+			return buffer_stream_allocate(gltf->binary_chunk.data, STREAM_IN | STREAM_BINARY, gltf->binary_chunk.length,
+			                              gltf->binary_chunk.length, false, false);
 		else
-			return gltf_allocate_glb_substream(STRING_ARGS(gltf->binary_chunk.uri),
-			                                   gltf->binary_chunk.offset,
+			return gltf_allocate_glb_substream(STRING_ARGS(gltf->binary_chunk.uri), gltf->binary_chunk.offset,
 			                                   gltf->binary_chunk.length);
 	}
 

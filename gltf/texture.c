@@ -1,11 +1,11 @@
-/* texture.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
+/* texture.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson
  *
  * This library provides a cross-platform glTF I/O library in C11 providing
  * glTF ascii/binary reading and writing functionality.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/gltf_lib
+ * https://github.com/mjansson/gltf_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -68,8 +68,7 @@ gltf_textures_parse_texture(gltf_t* gltf, const char* buffer, json_token_t* toke
 bool
 gltf_textures_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
-		          STRING_CONST("Main textures attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main textures attribute has invalid type"));
 		return false;
 	}
 
@@ -82,8 +81,7 @@ gltf_textures_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size
 	size_t storage_size = sizeof(gltf_texture_t) * num_textures;
 	gltf_textures_finalize(gltf);
 	gltf->num_textures = (unsigned int)num_textures;
-	gltf->textures =
-	    memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->textures = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;
 	size_t itex = tokens[itoken].child;

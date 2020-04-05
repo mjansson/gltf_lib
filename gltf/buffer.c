@@ -1,11 +1,11 @@
-/* buffer.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
+/* buffer.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson
  *
  * This library provides a cross-platform glTF I/O library in C11 providing
  * glTF ascii/binary reading and writing functionality.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/gltf_lib
+ * https://github.com/mjansson/gltf_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -34,8 +34,7 @@ gltf_buffer_initialize(gltf_buffer_t* buffer) {
 }
 
 static bool
-gltf_buffers_parse_buffer(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken,
-                          gltf_buffer_t* buffer) {
+gltf_buffers_parse_buffer(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken, gltf_buffer_t* buffer) {
 	if (tokens[itoken].type != JSON_OBJECT)
 		return false;
 
@@ -66,8 +65,7 @@ gltf_buffers_parse_buffer(gltf_t* gltf, const char* data, json_token_t* tokens, 
 bool
 gltf_buffers_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken) {
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
-		          STRING_CONST("Main buffers attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main buffers attribute has invalid type"));
 		return false;
 	}
 
@@ -80,8 +78,7 @@ gltf_buffers_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t 
 	size_t storage_size = sizeof(gltf_buffer_t) * num_buffers;
 	gltf_buffers_finalize(gltf);
 	gltf->num_buffers = (unsigned int)num_buffers;
-	gltf->buffers =
-	    memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->buffers = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;
 	size_t iscene = tokens[itoken].child;
@@ -150,8 +147,7 @@ gltf_buffer_view_parse_view(gltf_t* gltf, const char* data, json_token_t* tokens
 bool
 gltf_buffer_views_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken) {
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
-		          STRING_CONST("Main buffer views attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main buffer views attribute has invalid type"));
 		return false;
 	}
 
@@ -164,8 +160,7 @@ gltf_buffer_views_parse(gltf_t* gltf, const char* data, json_token_t* tokens, si
 	size_t storage_size = sizeof(gltf_buffer_view_t) * num_views;
 	gltf_buffer_views_finalize(gltf);
 	gltf->num_buffer_views = (unsigned int)num_views;
-	gltf->buffer_views =
-	    memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->buffer_views = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;
 	size_t iscene = tokens[itoken].child;

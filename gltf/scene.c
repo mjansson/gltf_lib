@@ -1,11 +1,11 @@
-/* scene.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
+/* scene.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson
  *
  * This library provides a cross-platform glTF I/O library in C11 providing
  * glTF ascii/binary reading and writing functionality.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/gltf_lib
+ * https://github.com/mjansson/gltf_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -31,12 +31,10 @@ gltf_scenes_finalize(gltf_t* gltf) {
 }
 
 static bool
-gltf_scene_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                       gltf_scene_t* scene) {
+gltf_scene_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, gltf_scene_t* scene) {
 	FOUNDATION_UNUSED(gltf);
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
-		          STRING_CONST("Scene nodes attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Scene nodes attribute has invalid type"));
 		return false;
 	}
 
@@ -47,8 +45,7 @@ gltf_scene_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, s
 		return true;
 
 	scene->num_nodes = (unsigned int)num_nodes;
-	scene->nodes =
-	    memory_allocate(HASH_GLTF, sizeof(unsigned int) * num_nodes, 0, MEMORY_PERSISTENT);
+	scene->nodes = memory_allocate(HASH_GLTF, sizeof(unsigned int) * num_nodes, 0, MEMORY_PERSISTENT);
 
 	unsigned int icounter = 0;
 	size_t inode = tokens[itoken].child;
@@ -70,8 +67,7 @@ gltf_scene_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, s
 }
 
 static int
-gltf_scenes_parse_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                        gltf_scene_t* scene) {
+gltf_scenes_parse_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, gltf_scene_t* scene) {
 	if (tokens[itoken].type != JSON_OBJECT)
 		return false;
 
@@ -79,8 +75,7 @@ gltf_scenes_parse_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, 
 	while (itoken) {
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
-		if ((identifier_hash == HASH_NODES) &&
-		    !gltf_scene_parse_nodes(gltf, buffer, tokens, itoken, scene))
+		if ((identifier_hash == HASH_NODES) && !gltf_scene_parse_nodes(gltf, buffer, tokens, itoken, scene))
 			return false;
 		else if ((identifier_hash == HASH_NAME) && (tokens[itoken].type == JSON_STRING))
 			scene->name = json_token_value(buffer, tokens + itoken);
@@ -98,8 +93,7 @@ gltf_scenes_parse_scene(gltf_t* gltf, const char* buffer, json_token_t* tokens, 
 bool
 gltf_scenes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
-		          STRING_CONST("Main scenes attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main scenes attribute has invalid type"));
 		return false;
 	}
 
@@ -112,8 +106,7 @@ gltf_scenes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 	size_t storage_size = sizeof(gltf_scene_t) * num_scenes;
 	gltf_scenes_finalize(gltf);
 	gltf->num_scenes = (unsigned int)num_scenes;
-	gltf->scenes =
-	    memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->scenes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;
 	size_t iscene = tokens[itoken].child;
@@ -130,8 +123,7 @@ gltf_scenes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 bool
 gltf_scene_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
 	if ((tokens[itoken].type != JSON_STRING) && (tokens[itoken].type != JSON_PRIMITIVE)) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
-		          STRING_CONST("Main scene attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main scene attribute has invalid type"));
 		return false;
 	}
 

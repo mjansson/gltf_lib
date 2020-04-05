@@ -1,11 +1,11 @@
-/* material.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson / Rampant Pixels
+/* material.c  -  glTF library  -  Public Domain  -  2018 Mattias Jansson
  *
  * This library provides a cross-platform glTF I/O library in C11 providing
  * glTF ascii/binary reading and writing functionality.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/gltf_lib
+ * https://github.com/mjansson/gltf_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -55,11 +55,10 @@ gltf_material_parse_alphamode(gltf_t* gltf, const char* buffer, json_token_t* to
 }
 
 static bool
-gltf_material_parse_textureinfo(gltf_t* gltf, const char* buffer, json_token_t* tokens,
-                                size_t itoken, gltf_texture_info_t* texture) {
+gltf_material_parse_textureinfo(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                                gltf_texture_info_t* texture) {
 	if (tokens[itoken].type != JSON_OBJECT) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
-		          STRING_CONST("Texture info attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Texture info attribute has invalid type"));
 		return false;
 	}
 
@@ -67,8 +66,7 @@ gltf_material_parse_textureinfo(gltf_t* gltf, const char* buffer, json_token_t* 
 	while (itoken) {
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
-		if ((identifier_hash == HASH_INDEX) &&
-		    !gltf_token_to_integer(gltf, buffer, tokens, itoken, &texture->index))
+		if ((identifier_hash == HASH_INDEX) && !gltf_token_to_integer(gltf, buffer, tokens, itoken, &texture->index))
 			return false;
 		else if ((identifier_hash == HASH_TEXCOORD) &&
 		         !gltf_token_to_integer(gltf, buffer, tokens, itoken, &texture->texcoord))
@@ -85,10 +83,9 @@ gltf_material_parse_textureinfo(gltf_t* gltf, const char* buffer, json_token_t* 
 }
 
 static bool
-gltf_material_parse_occlusiontexture(gltf_t* gltf, const char* buffer, json_token_t* tokens,
-                                     size_t itoken, gltf_material_t* material) {
-	if (!gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken,
-	                                     &material->occlusion_texture))
+gltf_material_parse_occlusiontexture(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                                     gltf_material_t* material) {
+	if (!gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken, &material->occlusion_texture))
 		return false;
 
 	itoken = tokens[itoken].child;
@@ -106,8 +103,8 @@ gltf_material_parse_occlusiontexture(gltf_t* gltf, const char* buffer, json_toke
 }
 
 static bool
-gltf_material_parse_normaltexture(gltf_t* gltf, const char* buffer, json_token_t* tokens,
-                                  size_t itoken, gltf_material_t* material) {
+gltf_material_parse_normaltexture(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
+                                  gltf_material_t* material) {
 	if (!gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken, &material->normal_texture))
 		return false;
 
@@ -126,8 +123,7 @@ gltf_material_parse_normaltexture(gltf_t* gltf, const char* buffer, json_token_t
 }
 
 static bool
-gltf_material_parse_pbrmetallicroughness(gltf_t* gltf, const char* buffer, json_token_t* tokens,
-                                         size_t itoken,
+gltf_material_parse_pbrmetallicroughness(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
                                          gltf_pbr_metallic_roughness_t* metallic_roughness) {
 	if (tokens[itoken].type != JSON_OBJECT)
 		return false;
@@ -153,12 +149,10 @@ gltf_material_parse_pbrmetallicroughness(gltf_t* gltf, const char* buffer, json_
 		                                     (double*)metallic_roughness->base_color_factor, 4))
 			return false;
 		else if ((identifier_hash == HASH_METALLICFACTOR) &&
-		         !gltf_token_to_double(gltf, buffer, tokens, itoken,
-		                               (double*)&metallic_roughness->metallic_factor))
+		         !gltf_token_to_double(gltf, buffer, tokens, itoken, (double*)&metallic_roughness->metallic_factor))
 			return false;
 		else if ((identifier_hash == HASH_ROUGHNESSFACTOR) &&
-		         !gltf_token_to_double(gltf, buffer, tokens, itoken,
-		                               (double*)&metallic_roughness->roughness_factor))
+		         !gltf_token_to_double(gltf, buffer, tokens, itoken, (double*)&metallic_roughness->roughness_factor))
 			return false;
 
 		itoken = tokens[itoken].sibling;
@@ -188,22 +182,18 @@ gltf_materials_parse_material(gltf_t* gltf, const char* buffer, json_token_t* to
 		else if ((identifier_hash == HASH_ALPHAMODE) && (tokens[itoken].type == JSON_STRING))
 			gltf_material_parse_alphamode(gltf, buffer, tokens, itoken, material);
 		else if ((identifier_hash == HASH_ALPHACUTOFF) &&
-		         ((tokens[itoken].type == JSON_STRING) ||
-		          (tokens[itoken].type == JSON_PRIMITIVE)) &&
+		         ((tokens[itoken].type == JSON_STRING) || (tokens[itoken].type == JSON_PRIMITIVE)) &&
 		         !gltf_token_to_double(gltf, buffer, tokens, itoken, &material->alpha_cutoff))
 			return false;
 		else if ((identifier_hash == HASH_DOUBLESIDED) &&
-		         ((tokens[itoken].type == JSON_STRING) ||
-		          (tokens[itoken].type == JSON_PRIMITIVE)) &&
+		         ((tokens[itoken].type == JSON_STRING) || (tokens[itoken].type == JSON_PRIMITIVE)) &&
 		         !gltf_token_to_boolean(gltf, buffer, tokens, itoken, &material->double_sided))
 			return false;
 		else if ((identifier_hash == HASH_EMISSIVETEXTURE) &&
-		         !gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken,
-		                                          &material->emissive_texture))
+		         !gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken, &material->emissive_texture))
 			return false;
 		else if ((identifier_hash == HASH_EMISSIVEFACTOR) &&
-		         !gltf_token_to_double_array(gltf, buffer, tokens, itoken,
-		                                     (double*)material->emissive_factor, 3))
+		         !gltf_token_to_double_array(gltf, buffer, tokens, itoken, (double*)material->emissive_factor, 3))
 			return false;
 		else if ((identifier_hash == HASH_NORMALTEXTURE) &&
 		         !gltf_material_parse_normaltexture(gltf, buffer, tokens, itoken, material))
@@ -212,8 +202,7 @@ gltf_materials_parse_material(gltf_t* gltf, const char* buffer, json_token_t* to
 		         !gltf_material_parse_occlusiontexture(gltf, buffer, tokens, itoken, material))
 			return false;
 		else if ((identifier_hash == HASH_PBRMETALLICROUGHNESS) &&
-		         !gltf_material_parse_pbrmetallicroughness(gltf, buffer, tokens, itoken,
-		                                                   &material->metallic_roughness))
+		         !gltf_material_parse_pbrmetallicroughness(gltf, buffer, tokens, itoken, &material->metallic_roughness))
 			return false;
 
 		itoken = tokens[itoken].sibling;
@@ -225,8 +214,7 @@ gltf_materials_parse_material(gltf_t* gltf, const char* buffer, json_token_t* to
 bool
 gltf_materials_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken) {
 	if (tokens[itoken].type != JSON_ARRAY) {
-		log_error(HASH_GLTF, ERROR_INVALID_VALUE,
-		          STRING_CONST("Main materials attribute has invalid type"));
+		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Main materials attribute has invalid type"));
 		return false;
 	}
 
@@ -239,8 +227,7 @@ gltf_materials_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 	size_t storage_size = sizeof(gltf_material_t) * num_materials;
 	gltf_materials_finalize(gltf);
 	gltf->num_materials = (unsigned int)num_materials;
-	gltf->materials =
-	    memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf->materials = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;
 	size_t imat = tokens[itoken].child;
