@@ -53,10 +53,10 @@ gltf_module_version(void);
 \param buffer Data buffer
 \param size Size of data buffer
 \param tokens JSON tokens
-\param num_tokens Number of JSON tokens */
+\param token_count Number of JSON tokens */
 GLTF_API void
 gltf_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
-                         const struct json_token_t* tokens, size_t num_tokens);
+                         const struct json_token_t* tokens, size_t token_count);
 
 /*! Initialize glTF data structure
 \param gltf Target glTF data structure */

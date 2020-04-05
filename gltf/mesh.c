@@ -31,7 +31,7 @@ gltf_primitive_finalize(gltf_primitive_t* primitive) {
 static void
 gltf_mesh_finalize(gltf_mesh_t* mesh) {
 	if (mesh->primitives) {
-		for (unsigned int iprim = 0; iprim < mesh->num_primitives; ++iprim)
+		for (unsigned int iprim = 0; iprim < mesh->primitives_count; ++iprim)
 			gltf_primitive_finalize(mesh->primitives + iprim);
 		memory_deallocate(mesh->primitives);
 	}
@@ -40,7 +40,7 @@ gltf_mesh_finalize(gltf_mesh_t* mesh) {
 void
 gltf_meshes_finalize(gltf_t* gltf) {
 	if (gltf->meshes) {
-		for (unsigned int imesh = 0; imesh < gltf->num_meshes; ++imesh)
+		for (unsigned int imesh = 0; imesh < gltf->meshes_count; ++imesh)
 			gltf_mesh_finalize(gltf->meshes + imesh);
 		memory_deallocate(gltf->meshes);
 	}
@@ -54,7 +54,7 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 		return false;
 	}
 
-	unsigned int customCount = 0;
+	unsigned int custom_count = 0;
 	size_t iparent = itoken;
 	itoken = tokens[iparent].child;
 	while (itoken) {
@@ -85,21 +85,20 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 		         !gltf_token_to_integer(gltf, buffer, tokens, itoken, &primitive->attributes[GLTF_WEIGHTS_0]))
 			return false;
 		else
-			++customCount;
+			++custom_count;
 
 		itoken = tokens[itoken].sibling;
 	}
 
-	primitive->num_attributes_custom = customCount;
-	primitive->attributes_custom = memory_allocate(HASH_GLTF, sizeof(gltf_attribute_t) * customCount, 0,
+	primitive->attributes_custom_count = custom_count;
+	primitive->attributes_custom = memory_allocate(HASH_GLTF, sizeof(gltf_attribute_t) * custom_count, 0,
 	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	for (unsigned int iattrib = 0; iattrib < customCount; ++iattrib)
+	for (unsigned int iattrib = 0; iattrib < custom_count; ++iattrib)
 		primitive->attributes_custom[iattrib].accessor = GLTF_INVALID_INDEX;
 
-	customCount = 0;
 	itoken = tokens[iparent].child;
-	while (itoken && customCount) {
+	while (itoken && custom_count) {
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if ((identifier_hash == HASH_POSITION) || (identifier_hash == HASH_NORMAL) ||
@@ -108,12 +107,12 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 		    (identifier_hash == HASH_JOINTS_0) || (identifier_hash == HASH_WEIGHTS_0))
 			continue;
 
-		gltf_attribute_t* attrib = primitive->attributes_custom + customCount;
+		gltf_attribute_t* attrib = primitive->attributes_custom + custom_count;
 		attrib->semantic = identifier.str;
 		attrib->semantic_length = identifier.length;
 		if (!gltf_token_to_integer(gltf, buffer, tokens, itoken, &attrib->accessor))
 			return false;
-		--customCount;
+		--custom_count;
 
 		itoken = tokens[itoken].sibling;
 	}
@@ -168,14 +167,14 @@ gltf_mesh_parse_primitives(gltf_t* gltf, const char* buffer, json_token_t* token
 		return false;
 	}
 
-	size_t num_primitives = tokens[itoken].value_length;
-	if (num_primitives > GLTF_MAX_INDEX)
+	size_t primitives_count = tokens[itoken].value_length;
+	if (primitives_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_primitives)
+	if (!primitives_count)
 		return true;
 
-	size_t size = sizeof(gltf_primitive_t) * num_primitives;
-	mesh->num_primitives = (unsigned int)num_primitives;
+	size_t size = sizeof(gltf_primitive_t) * primitives_count;
+	mesh->primitives_count = (unsigned int)primitives_count;
 	mesh->primitives = memory_allocate(HASH_GLTF, size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int iprim = 0;
@@ -223,15 +222,15 @@ gltf_meshes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 		return false;
 	}
 
-	size_t num_meshes = tokens[itoken].value_length;
-	if (num_meshes > GLTF_MAX_INDEX)
+	size_t meshes_count = tokens[itoken].value_length;
+	if (meshes_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_meshes)
+	if (!meshes_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_mesh_t) * num_meshes;
+	size_t storage_size = sizeof(gltf_mesh_t) * meshes_count;
 	gltf_meshes_finalize(gltf);
-	gltf->num_meshes = (unsigned int)num_meshes;
+	gltf->meshes_count = (unsigned int)meshes_count;
 	gltf->meshes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;

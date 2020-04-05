@@ -71,15 +71,15 @@ gltf_images_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 		return false;
 	}
 
-	size_t num_images = tokens[itoken].value_length;
-	if (num_images > GLTF_MAX_INDEX)
+	size_t images_count = tokens[itoken].value_length;
+	if (images_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_images)
+	if (!images_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_image_t) * num_images;
+	size_t storage_size = sizeof(gltf_image_t) * images_count;
 	gltf_images_finalize(gltf);
-	gltf->num_images = (unsigned int)num_images;
+	gltf->images_count = (unsigned int)images_count;
 	gltf->images = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;

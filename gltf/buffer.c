@@ -69,15 +69,15 @@ gltf_buffers_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t 
 		return false;
 	}
 
-	size_t num_buffers = tokens[itoken].value_length;
-	if (num_buffers > GLTF_MAX_INDEX)
+	size_t buffers_count = tokens[itoken].value_length;
+	if (buffers_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_buffers)
+	if (!buffers_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_buffer_t) * num_buffers;
+	size_t storage_size = sizeof(gltf_buffer_t) * buffers_count;
 	gltf_buffers_finalize(gltf);
-	gltf->num_buffers = (unsigned int)num_buffers;
+	gltf->buffers_count = (unsigned int)buffers_count;
 	gltf->buffers = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;
@@ -151,15 +151,15 @@ gltf_buffer_views_parse(gltf_t* gltf, const char* data, json_token_t* tokens, si
 		return false;
 	}
 
-	size_t num_views = tokens[itoken].value_length;
-	if (num_views > GLTF_MAX_INDEX)
+	size_t views_count = tokens[itoken].value_length;
+	if (views_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_views)
+	if (!views_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_buffer_view_t) * num_views;
+	size_t storage_size = sizeof(gltf_buffer_view_t) * views_count;
 	gltf_buffer_views_finalize(gltf);
-	gltf->num_buffer_views = (unsigned int)num_views;
+	gltf->buffer_views_count = (unsigned int)views_count;
 	gltf->buffer_views = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;

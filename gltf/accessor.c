@@ -185,15 +185,15 @@ gltf_accessors_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_
 		return false;
 	}
 
-	size_t num_accessors = tokens[itoken].value_length;
-	if (num_accessors > GLTF_MAX_INDEX)
+	size_t accessors_count = tokens[itoken].value_length;
+	if (accessors_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_accessors)
+	if (!accessors_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_accessor_t) * num_accessors;
+	size_t storage_size = sizeof(gltf_accessor_t) * accessors_count;
 	gltf_buffers_finalize(gltf);
-	gltf->num_accessors = (unsigned int)num_accessors;
+	gltf->accessors_count = (unsigned int)accessors_count;
 	gltf->accessors = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT);
 
 	unsigned int icounter = 0;

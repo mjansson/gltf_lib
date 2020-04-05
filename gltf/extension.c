@@ -53,10 +53,10 @@ gltf_extensions_array_parse(const char* data, json_token_t* tokens, size_t itoke
 
 bool
 gltf_extensions_used_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken) {
-	return gltf_extensions_array_parse(data, tokens, itoken, &gltf->extensions_used, &gltf->num_extension_used);
+	return gltf_extensions_array_parse(data, tokens, itoken, &gltf->extensions_used, &gltf->extensions_used_count);
 }
 
 bool
 gltf_extensions_required_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken) {
-	return gltf_extensions_array_parse(data, tokens, itoken, &gltf->extensions_required, &gltf->num_extension_required);
+	return gltf_extensions_array_parse(data, tokens, itoken, &gltf->extensions_required, &gltf->extensions_required_count);
 }

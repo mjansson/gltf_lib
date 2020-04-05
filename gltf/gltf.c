@@ -48,13 +48,13 @@ gltf_module_is_initialized(void) {
 
 void
 gltf_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
-                         const struct json_token_t* tokens, size_t num_tokens) {
+                         const struct json_token_t* tokens, size_t token_count) {
 	FOUNDATION_UNUSED(path);
 	FOUNDATION_UNUSED(path_size);
 	FOUNDATION_UNUSED(buffer);
 	FOUNDATION_UNUSED(size);
 	FOUNDATION_UNUSED(tokens);
-	FOUNDATION_UNUSED(num_tokens);
+	FOUNDATION_UNUSED(token_count);
 }
 
 void
@@ -277,7 +277,7 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 	gltf->buffer = memory_allocate(HASH_GLTF, json_size, 0, MEMORY_PERSISTENT);
 
 	size_t itoken = 0;
-	size_t num_tokens = 0;
+	size_t token_count = 0;
 	size_t token_capacity = json_size / 10;
 	json_token_t* tokens = memory_allocate(HASH_GLTF, sizeof(json_token_t) * token_capacity, 0, MEMORY_TEMPORARY);
 
@@ -303,13 +303,13 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 		}
 	}
 
-	num_tokens = json_parse(gltf->buffer, json_size, tokens, token_capacity);
-	if (num_tokens > token_capacity) {
-		tokens = memory_reallocate(tokens, sizeof(json_token_t) * num_tokens, 0, sizeof(json_token_t) * token_capacity,
+	token_count = json_parse(gltf->buffer, json_size, tokens, token_capacity);
+	if (token_count > token_capacity) {
+		tokens = memory_reallocate(tokens, sizeof(json_token_t) * token_count, 0, sizeof(json_token_t) * token_capacity,
 		                           MEMORY_TEMPORARY);
-		token_capacity = num_tokens;
-		num_tokens = json_parse(gltf->buffer, json_size, tokens, token_capacity);
-		if (num_tokens > token_capacity)
+		token_capacity = token_count;
+		token_count = json_parse(gltf->buffer, json_size, tokens, token_capacity);
+		if (token_count > token_capacity)
 			goto exit;
 	}
 
@@ -357,30 +357,30 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 		log_infof(HASH_GLTF, STRING_CONST("Read %s file version %.*s - %.*s"),
 		          (gltf->file_type < GLTF_FILE_GLB) ? "glTF" : "GLB", STRING_FORMAT(gltf->asset.version),
 		          STRING_FORMAT(gltf->asset.generator));
-		log_infof(HASH_GLTF, STRING_CONST("  %u scenes"), gltf->num_scenes);
-		for (unsigned int iscene = 0; iscene < gltf->num_scenes; ++iscene) {
+		log_infof(HASH_GLTF, STRING_CONST("  %u scenes"), gltf->scenes_count);
+		for (unsigned int iscene = 0; iscene < gltf->scenes_count; ++iscene) {
 			gltf_scene_t* scene = gltf->scenes + iscene;
 			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" %u nodes"), iscene, STRING_FORMAT(scene->name),
-			          scene->num_nodes);
+			          scene->nodes_count);
 		}
-		log_infof(HASH_GLTF, STRING_CONST("  %u nodes"), gltf->num_nodes);
-		for (unsigned int inode = 0; inode < gltf->num_nodes; ++inode) {
+		log_infof(HASH_GLTF, STRING_CONST("  %u nodes"), gltf->nodes_count);
+		for (unsigned int inode = 0; inode < gltf->nodes_count; ++inode) {
 			gltf_node_t* node = gltf->nodes + inode;
 			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" mesh %d"), inode, STRING_FORMAT(node->name),
 			          (int)node->mesh);
 		}
-		log_infof(HASH_GLTF, STRING_CONST("  %u meshes"), gltf->num_meshes);
-		for (unsigned int imesh = 0; imesh < gltf->num_meshes; ++imesh) {
+		log_infof(HASH_GLTF, STRING_CONST("  %u meshes"), gltf->meshes_count);
+		for (unsigned int imesh = 0; imesh < gltf->meshes_count; ++imesh) {
 			gltf_mesh_t* mesh = gltf->meshes + imesh;
 			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" %d primitives"), imesh, STRING_FORMAT(mesh->name),
-			          (int)mesh->num_primitives);
-			for (unsigned int iprim = 0; iprim < mesh->num_primitives; ++iprim) {
+			          (int)mesh->primitives_count);
+			for (unsigned int iprim = 0; iprim < mesh->primitives_count; ++iprim) {
 				gltf_primitive_t* prim = mesh->primitives + iprim;
 				log_infof(HASH_GLTF, STRING_CONST("      %u: type %d material %d"), iprim, prim->mode, prim->material);
 			}
 		}
-		log_infof(HASH_GLTF, STRING_CONST("  %u textures"), gltf->num_textures);
-		log_infof(HASH_GLTF, STRING_CONST("  %u images"), gltf->num_images);
+		log_infof(HASH_GLTF, STRING_CONST("  %u textures"), gltf->textures_count);
+		log_infof(HASH_GLTF, STRING_CONST("  %u images"), gltf->images_count);
 	} else {
 		log_info(HASH_GLTF, STRING_CONST("Failed reading glTF file"));
 	}

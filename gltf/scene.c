@@ -24,7 +24,7 @@
 void
 gltf_scenes_finalize(gltf_t* gltf) {
 	if (gltf->scenes) {
-		for (unsigned int iscene = 0; iscene < gltf->num_scenes; ++iscene)
+		for (unsigned int iscene = 0; iscene < gltf->scenes_count; ++iscene)
 			memory_deallocate(gltf->scenes[iscene].nodes);
 		memory_deallocate(gltf->scenes);
 	}
@@ -38,14 +38,14 @@ gltf_scene_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, s
 		return false;
 	}
 
-	size_t num_nodes = tokens[itoken].value_length;
-	if (num_nodes > GLTF_MAX_INDEX)
+	size_t nodes_count = tokens[itoken].value_length;
+	if (nodes_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_nodes)
+	if (!nodes_count)
 		return true;
 
-	scene->num_nodes = (unsigned int)num_nodes;
-	scene->nodes = memory_allocate(HASH_GLTF, sizeof(unsigned int) * num_nodes, 0, MEMORY_PERSISTENT);
+	scene->nodes_count = (unsigned int)nodes_count;
+	scene->nodes = memory_allocate(HASH_GLTF, sizeof(unsigned int) * nodes_count, 0, MEMORY_PERSISTENT);
 
 	unsigned int icounter = 0;
 	size_t inode = tokens[itoken].child;
@@ -97,15 +97,15 @@ gltf_scenes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 		return false;
 	}
 
-	size_t num_scenes = tokens[itoken].value_length;
-	if (num_scenes > GLTF_MAX_INDEX)
+	size_t scenes_count = tokens[itoken].value_length;
+	if (scenes_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_scenes)
+	if (!scenes_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_scene_t) * num_scenes;
+	size_t storage_size = sizeof(gltf_scene_t) * scenes_count;
 	gltf_scenes_finalize(gltf);
-	gltf->num_scenes = (unsigned int)num_scenes;
+	gltf->scenes_count = (unsigned int)scenes_count;
 	gltf->scenes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;

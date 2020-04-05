@@ -72,15 +72,15 @@ gltf_textures_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size
 		return false;
 	}
 
-	size_t num_textures = tokens[itoken].value_length;
-	if (num_textures > GLTF_MAX_INDEX)
+	size_t textures_count = tokens[itoken].value_length;
+	if (textures_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_textures)
+	if (!textures_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_texture_t) * num_textures;
+	size_t storage_size = sizeof(gltf_texture_t) * textures_count;
 	gltf_textures_finalize(gltf);
-	gltf->num_textures = (unsigned int)num_textures;
+	gltf->textures_count = (unsigned int)textures_count;
 	gltf->textures = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;

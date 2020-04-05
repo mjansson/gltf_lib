@@ -218,15 +218,15 @@ gltf_materials_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 		return false;
 	}
 
-	size_t num_materials = tokens[itoken].value_length;
-	if (num_materials > GLTF_MAX_INDEX)
+	size_t materials_count = tokens[itoken].value_length;
+	if (materials_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_materials)
+	if (!materials_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_material_t) * num_materials;
+	size_t storage_size = sizeof(gltf_material_t) * materials_count;
 	gltf_materials_finalize(gltf);
-	gltf->num_materials = (unsigned int)num_materials;
+	gltf->materials_count = (unsigned int)materials_count;
 	gltf->materials = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	unsigned int icounter = 0;

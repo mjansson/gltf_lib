@@ -215,7 +215,7 @@ struct gltf_primitive_t {
 	unsigned int indices;
 	unsigned int attributes[GLTF_ATTRIBUTE_COUNT];
 	gltf_attribute_t* attributes_custom;
-	unsigned int num_attributes_custom;
+	unsigned int attributes_custom_count;
 	gltf_primitive_mode mode;
 	string_const_t extensions;
 	string_const_t extras;
@@ -224,7 +224,7 @@ struct gltf_primitive_t {
 struct gltf_mesh_t {
 	string_const_t name;
 	gltf_primitive_t* primitives;
-	unsigned int num_primitives;
+	unsigned int primitives_count;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -234,7 +234,7 @@ struct gltf_node_t {
 	string_const_t name;
 	unsigned int mesh;
 	gltf_transform_t transform;
-	unsigned int num_children;
+	unsigned int children_count;
 	unsigned int* children;
 	unsigned int base_children[GLTF_NODE_BASE_CHILDREN];
 	string_const_t extensions;
@@ -287,7 +287,7 @@ struct gltf_texture_t {
 struct gltf_scene_t {
 	string_const_t name;
 	unsigned int* nodes;
-	unsigned int num_nodes;
+	unsigned int nodes_count;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -311,27 +311,27 @@ struct gltf_t {
 	gltf_binary_chunk_t binary_chunk;
 	void* buffer;
 	gltf_asset_t asset;
-	unsigned int num_extension_used;
+	unsigned int extensions_used_count;
 	string_const_t* extensions_used;
-	unsigned int num_extension_required;
+	unsigned int extensions_required_count;
 	string_const_t* extensions_required;
 	gltf_accessor_t* accessors;
-	unsigned int num_accessors;
+	unsigned int accessors_count;
 	gltf_buffer_view_t* buffer_views;
-	unsigned int num_buffer_views;
+	unsigned int buffer_views_count;
 	gltf_buffer_t* buffers;
-	unsigned int num_buffers;
+	unsigned int buffers_count;
 	unsigned int scene;
 	gltf_scene_t* scenes;
-	unsigned int num_scenes;
+	unsigned int scenes_count;
 	gltf_node_t* nodes;
-	unsigned int num_nodes;
+	unsigned int nodes_count;
 	gltf_material_t* materials;
-	unsigned int num_materials;
+	unsigned int materials_count;
 	gltf_mesh_t* meshes;
-	unsigned int num_meshes;
+	unsigned int meshes_count;
 	gltf_texture_t* textures;
-	unsigned int num_textures;
+	unsigned int textures_count;
 	gltf_image_t* images;
-	unsigned int num_images;
+	unsigned int images_count;
 };
