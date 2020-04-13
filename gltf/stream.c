@@ -82,16 +82,17 @@ gltf_stream_base64_finalize(stream_t* stream) {
 }
 
 static size_t
-gltf_stream_base64_read(stream_t* stream, void* dest, size_t num) {
-	size_t available, num_read;
+gltf_stream_base64_read(stream_t* stream, void* dest, size_t size) {
+	size_t available;
 	gltf_stream_base64_t* gltf_stream = (gltf_stream_base64_t*)stream;
 
 	available = gltf_stream->total_size - gltf_stream->current;
-	num_read = (num < available) ? num : available;
+	if (available < size)
+		size = available;
 
 	size_t was_read = 0;
-	if (num_read > 0) {
-		size_t to_read = num_read;
+	if (size > 0) {
+		size_t to_read = size;
 		FOUNDATION_ASSERT(gltf_stream->buffer_size >= gltf_stream->offset);
 		available = gltf_stream->buffer_size - gltf_stream->offset;
 		while (to_read > available) {
@@ -140,7 +141,7 @@ gltf_stream_base64_read(stream_t* stream, void* dest, size_t num) {
 		was_read += to_read;
 	}
 
-	FOUNDATION_ASSERT(was_read == num_read);
+	FOUNDATION_ASSERT(was_read == size);
 	return was_read;
 }
 

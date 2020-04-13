@@ -29,15 +29,15 @@ gltf_extensions_array_parse(const char* data, json_token_t* tokens, size_t itoke
 		return false;
 	}
 
-	size_t num_extensions = tokens[itoken].value_length;
-	if (num_extensions > GLTF_MAX_INDEX)
+	size_t extensions_count = tokens[itoken].value_length;
+	if (extensions_count > GLTF_MAX_INDEX)
 		return false;
-	if (!num_extensions)
+	if (!extensions_count)
 		return true;
 
-	size_t storage_size = sizeof(string_const_t) * num_extensions;
+	size_t storage_size = sizeof(string_const_t) * extensions_count;
 	memory_deallocate(*array);
-	*size = (unsigned int)num_extensions;
+	*size = (unsigned int)extensions_count;
 	*array = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT);
 
 	unsigned int icounter = 0;
@@ -58,5 +58,6 @@ gltf_extensions_used_parse(gltf_t* gltf, const char* data, json_token_t* tokens,
 
 bool
 gltf_extensions_required_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t itoken) {
-	return gltf_extensions_array_parse(data, tokens, itoken, &gltf->extensions_required, &gltf->extensions_required_count);
+	return gltf_extensions_array_parse(data, tokens, itoken, &gltf->extensions_required,
+	                                   &gltf->extensions_required_count);
 }
