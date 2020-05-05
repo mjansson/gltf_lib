@@ -104,8 +104,10 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 		if ((identifier_hash == HASH_POSITION) || (identifier_hash == HASH_NORMAL) ||
 		    (identifier_hash == HASH_TANGENT) || (identifier_hash == HASH_TEXCOORD_0) ||
 		    (identifier_hash == HASH_TEXCOORD_1) || (identifier_hash == HASH_COLOR_0) ||
-		    (identifier_hash == HASH_JOINTS_0) || (identifier_hash == HASH_WEIGHTS_0))
+		    (identifier_hash == HASH_JOINTS_0) || (identifier_hash == HASH_WEIGHTS_0)) {
+			itoken = tokens[itoken].sibling;
 			continue;
+		}
 
 		gltf_attribute_t* attrib = primitive->attributes_custom + custom_count;
 		attrib->semantic = identifier.str;
