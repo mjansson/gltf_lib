@@ -21,6 +21,8 @@
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
+#include <mesh/mesh.h>
+
 static void
 gltf_primitive_finalize(gltf_primitive_t* primitive) {
 	if (primitive->attributes_custom) {
@@ -245,4 +247,16 @@ gltf_meshes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 	}
 
 	return true;
+}
+
+struct mesh_t*
+gltf_to_mesh(gltf_t* gltf) {
+	FOUNDATION_UNUSED(gltf);
+	return 0;
+}
+
+void
+gltf_from_mesh(gltf_t* gltf, struct mesh_t* mesh) {
+	FOUNDATION_UNUSED(gltf);
+	FOUNDATION_UNUSED(mesh);
 }

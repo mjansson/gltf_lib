@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join('build', 'ninja'))
 
 import generator
 
-dependlibs = ['foundation']
+dependlibs = ['mesh', 'vector', 'foundation']
 
 generator = generator.Generator(project = 'gltf', dependlibs = dependlibs, variables = [('bundleidentifier', 'com.maniccoder.gltf.$(binname)')])
 target = generator.target
