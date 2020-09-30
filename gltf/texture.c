@@ -22,6 +22,14 @@
 #include <foundation/hashstrings.h>
 
 void
+gltf_texture_info_initialize(gltf_texture_info_t* texture_info) {
+	texture_info->index = GLTF_INVALID_INDEX;
+	texture_info->texcoord = 0;
+	texture_info->extensions = string_empty();
+	texture_info->extras = string_empty();
+}
+
+void
 gltf_textures_finalize(gltf_t* gltf) {
 	if (gltf->textures) {
 		memory_deallocate(gltf->textures);

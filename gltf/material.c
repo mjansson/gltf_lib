@@ -36,8 +36,18 @@ gltf_material_initialize(gltf_material_t* material) {
 	material->metallic_roughness.roughness_factor = 1.0;
 	material->normal_scale = 1.0;
 	material->occlusion_strength = 1.0;
+	material->emissive_factor[0] = material->emissive_factor[1] = material->emissive_factor[2] = 0;
 	material->alpha_mode = GLTF_ALPHA_MODE_OPAQUE;
 	material->alpha_cutoff = 0.5;
+	material->double_sided = false;
+	material->extensions = string_empty();
+	material->extras = string_empty();
+
+	gltf_texture_info_initialize(&material->metallic_roughness.base_color_texture);
+	gltf_texture_info_initialize(&material->metallic_roughness.metallic_roughness_texture);
+	gltf_texture_info_initialize(&material->normal_texture);
+	gltf_texture_info_initialize(&material->occlusion_texture);
+	gltf_texture_info_initialize(&material->emissive_texture);
 }
 
 static bool
