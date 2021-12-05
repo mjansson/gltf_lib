@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>gltf</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ProjectGuid>{4EFC7FEB-C4B7-4183-855E-9C73F6DE6A2B}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\build.default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup>
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemGroup>
+    <ClCompile Include="..\..\gltf\accessor.c" />
+    <ClCompile Include="..\..\gltf\buffer.c" />
+    <ClCompile Include="..\..\gltf\extension.c" />
+    <ClCompile Include="..\..\gltf\gltf.c" />
+    <ClCompile Include="..\..\gltf\image.c" />
+    <ClCompile Include="..\..\gltf\material.c" />
+    <ClCompile Include="..\..\gltf\mesh.c" />
+    <ClCompile Include="..\..\gltf\node.c" />
+    <ClCompile Include="..\..\gltf\scene.c" />
+    <ClCompile Include="..\..\gltf\stream.c" />
+    <ClCompile Include="..\..\gltf\texture.c" />
+    <ClCompile Include="..\..\gltf\version.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\gltf\accessor.h" />
+    <ClInclude Include="..\..\gltf\buffer.h" />
+    <ClInclude Include="..\..\gltf\build.h" />
+    <ClInclude Include="..\..\gltf\extension.h" />
+    <ClInclude Include="..\..\gltf\gltf.h" />
+    <ClInclude Include="..\..\gltf\hashstrings.h" />
+    <ClInclude Include="..\..\gltf\image.h" />
+    <ClInclude Include="..\..\gltf\material.h" />
+    <ClInclude Include="..\..\gltf\mesh.h" />
+    <ClInclude Include="..\..\gltf\node.h" />
+    <ClInclude Include="..\..\gltf\scene.h" />
+    <ClInclude Include="..\..\gltf\stream.h" />
+    <ClInclude Include="..\..\gltf\texture.h" />
+    <ClInclude Include="..\..\gltf\types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\gltf\hashstrings.txt" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\foundation;$(ProjectDir)..\..\..\foundation_lib;$(ProjectDir)..\..\..\vector;$(ProjectDir)..\..\..\vector_lib;$(ProjectDir)..\..\..\mesh;$(ProjectDir)..\..\..\mesh_lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GLTF_COMPILE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
