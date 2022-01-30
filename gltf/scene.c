@@ -131,3 +131,8 @@ gltf_scene_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t 
 	gltf->scene = string_to_uint(STRING_ARGS(value), false);
 	return true;
 }
+
+gltf_scene_t*
+gltf_scene_add(gltf_t* gltf) {
+
+}

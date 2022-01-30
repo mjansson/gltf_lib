@@ -235,8 +235,8 @@ struct gltf_node_t {
 	unsigned int mesh;
 	gltf_transform_t transform;
 	unsigned int children_count;
-	unsigned int* children;
-	unsigned int base_children[GLTF_NODE_BASE_CHILDREN];
+	unsigned int* children_ext;
+	unsigned int children_base[GLTF_NODE_BASE_CHILDREN];
 	string_const_t extensions;
 	string_const_t extras;
 };

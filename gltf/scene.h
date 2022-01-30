@@ -24,3 +24,6 @@ gltf_scenes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 
 GLTF_API bool
 gltf_scene_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken);
+
+GLTF_API gltf_scene_t*
+gltf_scene_add(gltf_t* gltf);
