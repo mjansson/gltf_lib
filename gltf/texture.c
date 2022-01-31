@@ -88,10 +88,10 @@ gltf_textures_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size
 
 	size_t storage_size = sizeof(gltf_texture_t) * textures_count;
 	gltf_textures_finalize(gltf);
-	gltf->textures_count = (unsigned int)textures_count;
+	gltf->textures_count = (uint)textures_count;
 	gltf->textures = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t itex = tokens[itoken].child;
 	while (itex) {
 		if (!gltf_textures_parse_texture(gltf, buffer, tokens, itex, gltf->textures + icounter))

@@ -30,7 +30,7 @@ gltf_materials_finalize(gltf_t* gltf) {
 
 static void
 gltf_material_initialize(gltf_material_t* material) {
-	for (unsigned int ielem = 0; ielem < 4; ++ielem)
+	for (uint ielem = 0; ielem < 4; ++ielem)
 		material->metallic_roughness.base_color_factor[ielem] = 1.0;
 	material->metallic_roughness.metallic_factor = 1.0;
 	material->metallic_roughness.roughness_factor = 1.0;
@@ -236,10 +236,10 @@ gltf_materials_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 
 	size_t storage_size = sizeof(gltf_material_t) * materials_count;
 	gltf_materials_finalize(gltf);
-	gltf->materials_count = (unsigned int)materials_count;
+	gltf->materials_count = (uint)materials_count;
 	gltf->materials = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t imat = tokens[itoken].child;
 	while (imat) {
 		if (!gltf_materials_parse_material(gltf, buffer, tokens, imat, gltf->materials + icounter))

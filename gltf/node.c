@@ -23,10 +23,10 @@
 void
 gltf_nodes_finalize(gltf_t* gltf) {
 	if (gltf->nodes) {
-		for (unsigned int inode = 0; inode < gltf->nodes_count; ++inode) {
+		for (uint inode = 0; inode < gltf->nodes_count; ++inode) {
 			gltf_node_t* node = gltf->nodes + inode;
-			if (node->children != node->base_children)
-				memory_deallocate(node->children);
+			if (node->children_ext)
+				memory_deallocate(node->children_ext);
 		}
 		memory_deallocate(gltf->nodes);
 	}
@@ -50,7 +50,7 @@ static void
 gltf_node_initialize(gltf_node_t* node) {
 	node->mesh = GLTF_INVALID_INDEX;
 	node->children_count = 0;
-	node->children = node->base_children;
+	node->children_ext = nullptr;
 
 	gltf_transform_initialize(&node->transform);
 }
@@ -69,11 +69,14 @@ gltf_nodes_parse_node(gltf_t* gltf, const char* data, json_token_t* tokens, size
 		if ((identifier_hash == HASH_NAME) && (tokens[itoken].type == JSON_STRING))
 			node->name = json_token_value(data, tokens + itoken);
 		else if (identifier_hash == HASH_CHILDREN) {
+			uint* children = node->children_base;
 			node->children_count = tokens[itoken].value_length;
-			if (node->children_count > GLTF_NODE_BASE_CHILDREN)
-				node->children =
-				    memory_allocate(HASH_GLTF, sizeof(unsigned int) * node->children_count, 0, MEMORY_PERSISTENT);
-			if (!gltf_token_to_integer_array(gltf, data, tokens, itoken, node->children, node->children_count))
+			if (node->children_count > GLTF_NODE_BASE_CHILDREN) {
+				node->children_ext =
+				    memory_allocate(HASH_GLTF, sizeof(uint) * node->children_count, 0, MEMORY_PERSISTENT);
+				children = node->children_ext;
+			}
+			if (!gltf_token_to_integer_array(gltf, data, tokens, itoken, children, node->children_count))
 				return false;
 		} else if ((identifier_hash == HASH_MESH) && !gltf_token_to_integer(gltf, data, tokens, itoken, &node->mesh))
 			return false;
@@ -117,10 +120,10 @@ gltf_nodes_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t it
 
 	size_t storage_size = sizeof(gltf_node_t) * nodes_count;
 	gltf_nodes_finalize(gltf);
-	gltf->nodes_count = (unsigned int)nodes_count;
+	gltf->nodes_count = (uint)nodes_count;
 	gltf->nodes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t iscene = tokens[itoken].child;
 	while (iscene) {
 		if (!gltf_nodes_parse_node(gltf, data, tokens, iscene, gltf->nodes + icounter))

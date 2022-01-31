@@ -77,10 +77,10 @@ gltf_buffers_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t 
 
 	size_t storage_size = sizeof(gltf_buffer_t) * buffers_count;
 	gltf_buffers_finalize(gltf);
-	gltf->buffers_count = (unsigned int)buffers_count;
+	gltf->buffers_count = (uint)buffers_count;
 	gltf->buffers = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t iscene = tokens[itoken].child;
 	while (iscene) {
 		if (!gltf_buffers_parse_buffer(gltf, data, tokens, iscene, gltf->buffers + icounter))
@@ -159,10 +159,10 @@ gltf_buffer_views_parse(gltf_t* gltf, const char* data, json_token_t* tokens, si
 
 	size_t storage_size = sizeof(gltf_buffer_view_t) * views_count;
 	gltf_buffer_views_finalize(gltf);
-	gltf->buffer_views_count = (unsigned int)views_count;
+	gltf->buffer_views_count = (uint)views_count;
 	gltf->buffer_views = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t iscene = tokens[itoken].child;
 	while (iscene) {
 		if (!gltf_buffer_view_parse_view(gltf, data, tokens, iscene, gltf->buffer_views + icounter))

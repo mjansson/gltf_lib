@@ -25,14 +25,5 @@ gltf_meshes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 //! External data structure
 struct mesh_t;
 
-/*! Transcode an glTF data structure to a mesh
-\param gltf Source glTF data structure
-\return New mesh */
-GLTF_API struct mesh_t*
-gltf_to_mesh(gltf_t* gltf);
-
-/*! Transcode a mesh to an glTF data structure
-\param gltf Destination glTF data structure
-\param mesh Source mesh */
-GLTF_API void
-gltf_from_mesh(gltf_t* gltf, struct mesh_t* mesh);
+GLTF_API uint
+gltf_mesh_add_mesh(gltf_t* gltf, const struct mesh_t* mesh);

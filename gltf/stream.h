@@ -22,4 +22,4 @@
 /*! Open a stream for a data URI
     \return Stream, null pointer if failed */
 GLTF_API stream_t*
-gltf_stream_open(gltf_t* gltf, const char* uri, size_t length, unsigned int mode);
+gltf_stream_open(gltf_t* gltf, const char* uri, size_t length, uint mode);

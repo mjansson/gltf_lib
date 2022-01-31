@@ -124,26 +124,26 @@ typedef enum gltf_attribute gltf_attribute;
 typedef enum gltf_primitive_mode gltf_primitive_mode;
 
 struct gltf_config_t {
-	size_t _unused;
+	size_t unused;
 };
 
 struct gltf_sparse_indices_t {
-	unsigned int buffer_view;
-	unsigned int byte_offset;
+	uint buffer_view;
+	uint byte_offset;
 	gltf_component_type component_type;
 	string_const_t extensions;
 	string_const_t extras;
 };
 
 struct gltf_sparse_values_t {
-	unsigned int buffer_view;
-	unsigned int byte_offset;
+	uint buffer_view;
+	uint byte_offset;
 	string_const_t extensions;
 	string_const_t extras;
 };
 
 struct gltf_accessor_sparse_t {
-	unsigned int count;
+	uint count;
 	gltf_sparse_indices_t indices;
 	gltf_sparse_values_t values;
 	string_const_t extensions;
@@ -152,11 +152,11 @@ struct gltf_accessor_sparse_t {
 
 struct gltf_accessor_t {
 	string_const_t name;
-	unsigned int buffer_view;
-	unsigned int byte_offset;
+	uint buffer_view;
+	uint byte_offset;
 	gltf_data_type type;
 	gltf_component_type component_type;
-	unsigned int count;
+	uint count;
 	bool normalized;
 	double min[4];
 	double max[4];
@@ -172,11 +172,11 @@ struct gltf_asset_t {
 
 struct gltf_buffer_view_t {
 	string_const_t name;
-	unsigned int buffer;
-	unsigned int byte_offset;
-	unsigned int byte_length;
-	unsigned int byte_stride;
-	unsigned int target;
+	uint buffer;
+	uint byte_offset;
+	uint byte_length;
+	uint byte_stride;
+	uint target;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -184,14 +184,14 @@ struct gltf_buffer_view_t {
 struct gltf_buffer_t {
 	string_const_t name;
 	string_const_t uri;
-	unsigned int byte_length;
+	uint byte_length;
 	string_const_t extensions;
 	string_const_t extras;
 };
 
 struct gltf_texture_info_t {
-	unsigned int index;
-	unsigned int texcoord;
+	uint index;
+	uint texcoord;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -207,15 +207,15 @@ struct gltf_transform_t {
 struct gltf_attribute_t {
 	const char* semantic;
 	size_t semantic_length;
-	unsigned int accessor;
+	uint accessor;
 };
 
 struct gltf_primitive_t {
-	unsigned int material;
-	unsigned int indices;
-	unsigned int attributes[GLTF_ATTRIBUTE_COUNT];
+	uint material;
+	uint indices;
+	uint attributes[GLTF_ATTRIBUTE_COUNT];
 	gltf_attribute_t* attributes_custom;
-	unsigned int attributes_custom_count;
+	uint attributes_custom_count;
 	gltf_primitive_mode mode;
 	string_const_t extensions;
 	string_const_t extras;
@@ -224,7 +224,7 @@ struct gltf_primitive_t {
 struct gltf_mesh_t {
 	string_const_t name;
 	gltf_primitive_t* primitives;
-	unsigned int primitives_count;
+	uint primitives_count;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -232,11 +232,11 @@ struct gltf_mesh_t {
 #define GLTF_NODE_BASE_CHILDREN 4
 struct gltf_node_t {
 	string_const_t name;
-	unsigned int mesh;
+	uint mesh;
 	gltf_transform_t transform;
-	unsigned int children_count;
-	unsigned int* children_ext;
-	unsigned int children_base[GLTF_NODE_BASE_CHILDREN];
+	uint children_count;
+	uint* children_ext;
+	uint children_base[GLTF_NODE_BASE_CHILDREN];
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -271,23 +271,23 @@ struct gltf_image_t {
 	string_const_t name;
 	string_const_t uri;
 	string_const_t mime_type;
-	unsigned int buffer_view;
+	uint buffer_view;
 	string_const_t extensions;
 	string_const_t extras;
 };
 
 struct gltf_texture_t {
 	string_const_t name;
-	unsigned int sampler;
-	unsigned int source;
+	uint sampler;
+	uint source;
 	string_const_t extensions;
 	string_const_t extras;
 };
 
 struct gltf_scene_t {
 	string_const_t name;
-	unsigned int* nodes;
-	unsigned int nodes_count;
+	uint* nodes;
+	uint nodes_count;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -311,27 +311,32 @@ struct gltf_t {
 	gltf_binary_chunk_t binary_chunk;
 	void* buffer;
 	gltf_asset_t asset;
-	unsigned int extensions_used_count;
+	uint extensions_used_count;
 	string_const_t* extensions_used;
-	unsigned int extensions_required_count;
+	uint extensions_required_count;
 	string_const_t* extensions_required;
 	gltf_accessor_t* accessors;
-	unsigned int accessors_count;
+	uint accessors_count;
 	gltf_buffer_view_t* buffer_views;
-	unsigned int buffer_views_count;
+	uint buffer_views_count;
 	gltf_buffer_t* buffers;
-	unsigned int buffers_count;
-	unsigned int scene;
+	uint buffers_count;
+	uint scene;
 	gltf_scene_t* scenes;
-	unsigned int scenes_count;
+	uint scenes_count;
 	gltf_node_t* nodes;
-	unsigned int nodes_count;
+	uint nodes_count;
 	gltf_material_t* materials;
-	unsigned int materials_count;
+	uint materials_count;
 	gltf_mesh_t* meshes;
-	unsigned int meshes_count;
+	uint meshes_count;
 	gltf_texture_t* textures;
-	unsigned int textures_count;
+	uint textures_count;
 	gltf_image_t* images;
-	unsigned int images_count;
+	uint images_count;
+
+	//! String storage during writing
+	string_t* string_array;
+	//! Output storage for buffers during writing
+	virtualarray_t* output_buffer;
 };

@@ -83,22 +83,22 @@ GLTF_API bool
 gltf_write(const gltf_t* gltf, stream_t* stream);
 
 bool
-gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, unsigned int* value);
+gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, uint* value);
 
 bool
 gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* value);
 
 bool
-gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, unsigned int* values,
-                            unsigned int dim);
+gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, uint* values,
+                            uint dim);
 
 bool
 gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* values,
-                           unsigned int dim);
+                           uint dim);
 
 bool
 gltf_token_to_string_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                           string_const_t* values, unsigned int dim);
+                           string_const_t* values, uint dim);
 
 bool
 gltf_token_to_data_type(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,

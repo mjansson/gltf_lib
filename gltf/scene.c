@@ -24,7 +24,7 @@
 void
 gltf_scenes_finalize(gltf_t* gltf) {
 	if (gltf->scenes) {
-		for (unsigned int iscene = 0; iscene < gltf->scenes_count; ++iscene)
+		for (uint iscene = 0; iscene < gltf->scenes_count; ++iscene)
 			memory_deallocate(gltf->scenes[iscene].nodes);
 		memory_deallocate(gltf->scenes);
 	}
@@ -44,17 +44,17 @@ gltf_scene_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, s
 	if (!nodes_count)
 		return true;
 
-	scene->nodes_count = (unsigned int)nodes_count;
-	scene->nodes = memory_allocate(HASH_GLTF, sizeof(unsigned int) * nodes_count, 0, MEMORY_PERSISTENT);
+	scene->nodes_count = (uint)nodes_count;
+	scene->nodes = memory_allocate(HASH_GLTF, sizeof(uint) * nodes_count, 0, MEMORY_PERSISTENT);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t inode = tokens[itoken].child;
 	while (inode) {
 		if ((tokens[inode].type != JSON_STRING) && (tokens[inode].type != JSON_PRIMITIVE))
 			return false;
 
 		string_const_t value = json_token_value(buffer, tokens + inode);
-		unsigned int node = string_to_uint(STRING_ARGS(value), false);
+		uint node = string_to_uint(STRING_ARGS(value), false);
 		if (node > GLTF_MAX_INDEX)
 			return false;
 		scene->nodes[icounter] = node;
@@ -105,10 +105,10 @@ gltf_scenes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 
 	size_t storage_size = sizeof(gltf_scene_t) * scenes_count;
 	gltf_scenes_finalize(gltf);
-	gltf->scenes_count = (unsigned int)scenes_count;
+	gltf->scenes_count = (uint)scenes_count;
 	gltf->scenes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t iscene = tokens[itoken].child;
 	while (iscene) {
 		if (!gltf_scenes_parse_scene(gltf, buffer, tokens, iscene, gltf->scenes + icounter))
@@ -134,5 +134,10 @@ gltf_scene_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t 
 
 gltf_scene_t*
 gltf_scene_add(gltf_t* gltf) {
-
+	uint scenes_count = gltf->scenes_count;
+	size_t old_storage_size = sizeof(gltf_scene_t) * scenes_count;
+	size_t storage_size = sizeof(gltf_scene_t) * (++scenes_count);
+	gltf->scenes_count = (uint)scenes_count;
+	gltf->scenes = memory_reallocate(gltf->scenes, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	return pointer_offset(gltf->scenes, old_storage_size);
 }

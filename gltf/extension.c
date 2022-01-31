@@ -23,7 +23,7 @@
 
 static bool
 gltf_extensions_array_parse(const char* data, json_token_t* tokens, size_t itoken, string_const_t** array,
-                            unsigned int* size) {
+                            uint* size) {
 	if (tokens[itoken].type != JSON_ARRAY) {
 		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Extensions used/required attribute has invalid type"));
 		return false;
@@ -37,10 +37,10 @@ gltf_extensions_array_parse(const char* data, json_token_t* tokens, size_t itoke
 
 	size_t storage_size = sizeof(string_const_t) * extensions_count;
 	memory_deallocate(*array);
-	*size = (unsigned int)extensions_count;
+	*size = (uint)extensions_count;
 	*array = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t iext = tokens[itoken].child;
 	while (iext) {
 		(*array)[icounter] = json_token_value(data, tokens + iext);

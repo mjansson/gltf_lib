@@ -193,10 +193,10 @@ gltf_accessors_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_
 
 	size_t storage_size = sizeof(gltf_accessor_t) * accessors_count;
 	gltf_buffers_finalize(gltf);
-	gltf->accessors_count = (unsigned int)accessors_count;
+	gltf->accessors_count = (uint)accessors_count;
 	gltf->accessors = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT);
 
-	unsigned int icounter = 0;
+	uint icounter = 0;
 	size_t iscene = tokens[itoken].child;
 	while (iscene) {
 		if (!gltf_accessors_parse_accessor(gltf, data, tokens, iscene, gltf->accessors + icounter))

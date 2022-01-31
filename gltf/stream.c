@@ -324,7 +324,7 @@ gltf_allocate_glb_substream(const char* path, size_t path_length, size_t offset,
 }
 
 stream_t*
-gltf_stream_open(gltf_t* gltf, const char* uri, size_t length, unsigned int mode) {
+gltf_stream_open(gltf_t* gltf, const char* uri, size_t length, uint mode) {
 	if (!length) {
 		if (gltf->file_type != GLTF_FILE_GLB_EMBED)
 			return nullptr;
