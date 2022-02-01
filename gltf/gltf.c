@@ -396,9 +396,82 @@ exit:
 
 bool
 gltf_write(const gltf_t* gltf, stream_t* stream) {
-	FOUNDATION_UNUSED(gltf);
-
 	stream_set_byteorder(stream, BYTEORDER_LITTLEENDIAN);
+	
+	stream_write(stream, STRING_CONST("{\n"));
+	stream_write(stream, STRING_CONST("\t\"asset\": {\n"));
+	stream_write(stream, STRING_CONST("\t\t\"generator\": \"gltf_lib\",\n"));
+	stream_write(stream, STRING_CONST("\t\t\"version\": \"2.0\"\n"));
+	stream_write(stream, STRING_CONST("\t}"));
 
-	return false;
+	if (gltf->output_buffer && gltf->output_buffer->count) {
+		char path_buffer[BUILD_MAX_PATHLEN];
+		string_const_t base_uri = stream_path(stream);
+		base_uri = path_base_file_name_with_directory(STRING_ARGS(base_uri));
+		string_t buffer_uri = string_concat(path_buffer, sizeof(path_buffer), STRING_ARGS(base_uri), STRING_CONST(".bin"));
+		string_const_t buffer_relative_uri = path_file_name(STRING_ARGS(buffer_uri));
+
+		stream_write(stream, STRING_CONST(",\n\t\"buffers\": [\n"));
+		stream_write(stream, STRING_CONST("\t\t{\n"));
+		stream_write_format(stream, STRING_CONST("\t\t\t\"uri\": \"%.*s\",\n"), STRING_FORMAT(buffer_relative_uri));
+		stream_write_format(stream, STRING_CONST("\t\t\t\"byteLength\": %" PRIsize "\n"), gltf->output_buffer->count);
+		stream_write(stream, STRING_CONST("\t\t}\n"));
+		stream_write(stream, STRING_CONST("\t]"));
+		
+		stream_t* buffer_stream = stream_open(STRING_ARGS(buffer_uri), STREAM_OUT | STREAM_BINARY | STREAM_CREATE | STREAM_TRUNCATE);
+		if (stream) {
+			stream_write(buffer_stream, gltf->output_buffer->storage, gltf->output_buffer->count);
+			stream_deallocate(buffer_stream);
+		} else {
+			log_errorf(HASH_GLTF, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Failed to open binary buffer stream: %.*s"), STRING_ARGS(buffer_uri));
+			return false;
+		}
+	}
+	
+	if (gltf->buffer_views_count) {
+		stream_write(stream, STRING_CONST(",\n\t\"bufferViews\": [\n"));
+		for (uint iview = 0; iview < gltf->buffer_views_count; ++iview) {
+			stream_write(stream, STRING_CONST("\t\t{\n"));
+			stream_write(stream, STRING_CONST("\t\t\t\"buffer\": 0,\n"));
+			stream_write_format(stream, STRING_CONST("\t\t\t\"byteOffset\": %u,\n"), gltf->buffer_views[iview].byte_offset);
+			stream_write_format(stream, STRING_CONST("\t\t\t\"byteLength\": %u\n"), gltf->buffer_views[iview].byte_length);
+			stream_write(stream, STRING_CONST("\t\t}"));
+			if (iview < (gltf->buffer_views_count - 1))
+				stream_write(stream, STRING_CONST(","));
+			stream_write(stream, STRING_CONST("\n"));
+		}
+		stream_write(stream, STRING_CONST("\t]"));
+	}
+	
+	if (gltf->accessors_count) {
+		stream_write(stream, STRING_CONST(",\n\t\"accessors\": [\n"));
+		for (uint iacc = 0; iacc < gltf->accessors_count; ++iacc) {
+			stream_write(stream, STRING_CONST("\t\t{\n"));
+			stream_write_format(stream, STRING_CONST("\t\t\t\"bufferView\": %u,\n"), gltf->accessors[iacc].buffer_view);
+			stream_write_format(stream, STRING_CONST("\t\t\t\"componentType\": %u,\n"), gltf->accessors[iacc].component_type);
+			stream_write_format(stream, STRING_CONST("\t\t\t\"count\": %u,\n"), gltf->accessors[iacc].count);
+
+			const char* typestr = "SCALAR";
+			switch (gltf->accessors[iacc].type) {
+				case GLTF_DATA_VEC2: typestr = "VEC2"; break;
+				case GLTF_DATA_VEC3: typestr = "VEC3"; break;
+				case GLTF_DATA_VEC4: typestr = "VEC4"; break;
+				case GLTF_DATA_MAT2: typestr = "MAT2"; break;
+				case GLTF_DATA_MAT3: typestr = "MAT3"; break;
+				case GLTF_DATA_MAT4: typestr = "MAT4"; break;
+				case GLTF_DATA_SCALAR:
+				default: break;
+			}
+			stream_write_format(stream, STRING_CONST("\t\t\t\"type\": %s\n"), typestr);
+			stream_write(stream, STRING_CONST("\t\t}"));
+			if (iacc < (gltf->accessors_count - 1))
+				stream_write(stream, STRING_CONST(","));
+			stream_write(stream, STRING_CONST("\n"));
+		}
+		stream_write(stream, STRING_CONST("\t]"));
+	}
+
+	stream_write(stream, STRING_CONST("\n}\n"));
+	
+	return true;
 }

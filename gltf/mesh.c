@@ -274,11 +274,8 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 	// Make sure we have an output buffer ready
 	if (!gltf->output_buffer)
 		gltf->output_buffer = virtualarray_allocate(1, 1024 * 1024 * 1024);
-	if (gltf->output_buffer->capacity < (gltf->output_buffer->count + (sizeof(float) * mesh->vertex.count * 3))) {
-		size_t current_count = gltf->output_buffer->count;
-		virtualarray_resize(gltf->output_buffer, current_count + (sizeof(float) * mesh->vertex.count * 3));
-		gltf->output_buffer->count = current_count;
-	}
+	uint current_offset = (uint)gltf->output_buffer->count;
+	virtualarray_resize(gltf->output_buffer, current_offset + (sizeof(float) * mesh->vertex.count * 3));
 
 	// Coordinates
 	{
@@ -291,7 +288,7 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 
 		gltf_buffer_view_t buffer_view = {0};
 		buffer_view.buffer = 0;
-		buffer_view.byte_offset = (uint)gltf->output_buffer->count;
+		buffer_view.byte_offset = current_offset;
 		buffer_view.byte_length = sizeof(float) * accessor.count * 3;
 
 		float* vertex_component = pointer_offset(gltf->output_buffer->storage, buffer_view.byte_offset);
@@ -303,28 +300,35 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 			*vertex_component++ = vector_z(*mesh_coordinate);
 		}
 
-		gltf->output_buffer->count += buffer_view.byte_length;
+		current_offset += buffer_view.byte_length;
+
+		old_storage_size = sizeof(gltf_buffer_view_t) * gltf->buffer_views_count;
+		storage_size = sizeof(gltf_buffer_view_t) * (gltf->buffer_views_count + 1);
+		gltf->buffer_views = memory_reallocate(gltf->buffer_views, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		gltf->buffer_views[gltf->buffer_views_count++] = buffer_view;
+
+		old_storage_size = sizeof(gltf_accessor_t) * gltf->accessors_count;
+		storage_size = sizeof(gltf_accessor_t) * (gltf->accessors_count + 1);
+		gltf->accessors = memory_reallocate(gltf->accessors, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		gltf->accessors[gltf->accessors_count++] = accessor;
 	}
 
 	// Now create primitives and index accessors
 	// Make sure we have an output buffer ready
-	if (gltf->output_buffer->capacity < (gltf->output_buffer->count + (sizeof(uint) * mesh->triangle.count * 3))) {
-		size_t current_count = gltf->output_buffer->count;
-		virtualarray_resize(gltf->output_buffer, current_count + (sizeof(uint) * mesh->triangle.count * 3));
-		gltf->output_buffer->count = current_count;
-	}
+	virtualarray_resize(gltf->output_buffer, current_offset + (sizeof(uint) * mesh->triangle.count * 3));
 
 	uint current_primitive = 0;
 	uint triangle_restart = 0;
 
 	while (triangle_restart != GLTF_INVALID_INDEX) {
 		// One triangle index buffer per primitive
-		uint* index = pointer_offset(gltf->output_buffer->storage, gltf->output_buffer->count);
+		uint* index = pointer_offset(gltf->output_buffer->storage, current_offset);
 
 		// One primitive per material
 		old_storage_size = sizeof(gltf_primitive_t) * gltf_mesh->primitives_count;
 		storage_size = sizeof(gltf_primitive_t) * (++gltf_mesh->primitives_count);
-		gltf_mesh->primitives = memory_reallocate(gltf_mesh->primitives, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		gltf_mesh->primitives = memory_reallocate(gltf_mesh->primitives, storage_size, 0, old_storage_size,
+		                                          MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 		gltf_primitive_t* primitive = gltf_mesh->primitives + current_primitive;
 		for (int iattrib = 0; iattrib < GLTF_ATTRIBUTE_COUNT; ++iattrib)
@@ -344,16 +348,14 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 				// Defer to a new primitive, store start triangle index if not set
 				if (triangle_restart == GLTF_INVALID_INDEX)
 					triangle_restart = itri;
-				continue;
-			}
-			if (triangle->material < current_material) {
+			} else if (triangle->material < current_material) {
 				// Already processed
-				continue;
+			} else {
+				*index++ = triangle->vertex[0];
+				*index++ = triangle->vertex[1];
+				*index++ = triangle->vertex[2];
+				++triangle_count;
 			}
-			*index++ = triangle->vertex[0];
-			*index++ = triangle->vertex[1];
-			*index++ = triangle->vertex[2];
-			++triangle_count;
 		}
 
 		// All triangles for this primitive collected, setup primitive and create index accessor
@@ -371,10 +373,10 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 
 		gltf_buffer_view_t buffer_view = {0};
 		buffer_view.buffer = 0;
-		buffer_view.byte_offset = (uint)gltf->output_buffer->count;
+		buffer_view.byte_offset = current_offset;
 		buffer_view.byte_length = sizeof(uint) * accessor.count;
 
-		gltf->output_buffer->count += buffer_view.byte_length;
+		current_offset += buffer_view.byte_length;
 
 		old_storage_size = sizeof(gltf_buffer_view_t) * gltf->buffer_views_count;
 		storage_size = sizeof(gltf_buffer_view_t) * (gltf->buffer_views_count + 1);
@@ -388,6 +390,7 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 
 		++current_primitive;
 	}
+	FOUNDATION_ASSERT(current_offset == (uint)gltf->output_buffer->count);
 
 	return (uint)(meshes_count - 1);
 }

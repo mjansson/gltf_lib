@@ -310,6 +310,7 @@ struct gltf_t {
 	gltf_file_type file_type;
 	gltf_binary_chunk_t binary_chunk;
 	void* buffer;
+
 	gltf_asset_t asset;
 	uint extensions_used_count;
 	string_const_t* extensions_used;
