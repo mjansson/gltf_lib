@@ -116,7 +116,7 @@ gltf_token_to_boolean(const gltf_t* gltf, const char* buffer, json_token_t* toke
 }
 
 bool
-gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* value) {
+gltf_token_to_real(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, real* value) {
 	FOUNDATION_UNUSED(gltf);
 	if (!itoken || ((tokens[itoken].type != JSON_STRING) && (tokens[itoken].type != JSON_PRIMITIVE))) {
 		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Integer attribute has invalid type"));
@@ -124,7 +124,7 @@ gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 	}
 
 	string_const_t strval = json_token_value(buffer, tokens + itoken);
-	*value = string_to_float64(STRING_ARGS(strval));
+	*value = string_to_float32(STRING_ARGS(strval));
 	return true;
 }
 
@@ -147,8 +147,8 @@ gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* toke
 }
 
 bool
-gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* values,
-                           uint dim) {
+gltf_token_to_real_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, real* values,
+                         uint dim) {
 	uint array_dim = tokens[itoken].value_length;
 	if (!itoken || (tokens[itoken].type != JSON_ARRAY) || (array_dim > dim)) {
 		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Double array attribute has invalid type"));
@@ -157,7 +157,7 @@ gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* token
 
 	itoken = tokens[itoken].child;
 	for (uint ielem = 0; ielem < array_dim; ++ielem) {
-		if (!gltf_token_to_double(gltf, buffer, tokens, itoken, values + ielem))
+		if (!gltf_token_to_real(gltf, buffer, tokens, itoken, values + ielem))
 			return false;
 		itoken = tokens[itoken].sibling;
 	}
@@ -471,7 +471,7 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 				for (uint icomp = 0; icomp < component_count; ++icomp) {
 					stream_write(stream, STRING_CONST("\t\t\t\t"));
 					if (gltf->accessors[iacc].component_type == GLTF_COMPONENT_FLOAT)
-						stream_write_float64(stream, gltf->accessors[iacc].min[icomp]);
+						stream_write_float32(stream, gltf->accessors[iacc].min[icomp]);
 					else
 						stream_write_uint32(stream, (uint)gltf->accessors[iacc].min[icomp]);
 					if (icomp < (component_count - 1))
@@ -482,7 +482,7 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 				for (uint icomp = 0; icomp < component_count; ++icomp) {
 					stream_write(stream, STRING_CONST("\t\t\t\t"));
 					if (gltf->accessors[iacc].component_type == GLTF_COMPONENT_FLOAT)
-						stream_write_float64(stream, gltf->accessors[iacc].max[icomp]);
+						stream_write_float32(stream, gltf->accessors[iacc].max[icomp]);
 					else
 						stream_write_uint32(stream, (uint)gltf->accessors[iacc].max[icomp]);
 					if (icomp < (component_count - 1))
@@ -572,6 +572,25 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 			stream_write_format(stream, STRING_CONST("\t\t\t\"name\": \"%.*s\""), STRING_FORMAT(node_name));
 			if (node->mesh != GLTF_INVALID_INDEX)
 				stream_write_format(stream, STRING_CONST(",\n\t\t\t\"mesh\": %u"), node->mesh);
+			bool has_matrix = node->transform.has_matrix;
+			bool identity_matrix = false;
+			if (has_matrix) {
+				if ((node->transform.matrix[0][0] == 1) && (node->transform.matrix[1][1] == 1) && (node->transform.matrix[2][2] == 1) && (node->transform.matrix[3][3] && 1)) {
+					if ((node->transform.matrix[0][1] == 0) && (node->transform.matrix[0][2] == 0) && (node->transform.matrix[0][3] == 0) &&
+						(node->transform.matrix[1][0] == 0) && (node->transform.matrix[1][2] == 0) && (node->transform.matrix[1][3] == 0) &&
+						(node->transform.matrix[2][0] == 0) && (node->transform.matrix[2][1] == 0) && (node->transform.matrix[2][3] == 0) &&
+						(node->transform.matrix[3][0] == 0) && (node->transform.matrix[3][1] == 0) && (node->transform.matrix[3][2] == 0))
+						identity_matrix = true;
+				}
+			}
+			if (has_matrix && !identity_matrix) {
+				stream_write(stream, STRING_CONST(",\n\t\t\t\"matrix\": [\n"));
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%f, %f, %f, %f,\n"), node->transform.matrix[0][0], node->transform.matrix[0][1], node->transform.matrix[0][2], node->transform.matrix[0][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%f, %f, %f, %f,\n"), node->transform.matrix[1][0], node->transform.matrix[1][1], node->transform.matrix[1][2], node->transform.matrix[1][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%f, %f, %f, %f,\n"), node->transform.matrix[2][0], node->transform.matrix[2][1], node->transform.matrix[2][2], node->transform.matrix[2][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%f, %f, %f, %f\n"), node->transform.matrix[3][0], node->transform.matrix[3][1], node->transform.matrix[3][2], node->transform.matrix[3][3]);
+				stream_write(stream, STRING_CONST("\t\t\t]"));
+			}
 			stream_write(stream, STRING_CONST("\n\t\t}"));
 			if (inode < (gltf->nodes_count - 1))
 				stream_write(stream, STRING_CONST(","));

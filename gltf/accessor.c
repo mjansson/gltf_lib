@@ -159,10 +159,10 @@ gltf_accessors_parse_accessor(gltf_t* gltf, const char* data, json_token_t* toke
 		         !gltf_token_to_data_type(gltf, data, tokens, itoken, &accessor->type))
 			return false;
 		else if ((identifier_hash == HASH_MIN) &&
-		         !gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->min, 4))
+		         !gltf_token_to_real_array(gltf, data, tokens, itoken, accessor->min, 4))
 			return false;
 		else if ((identifier_hash == HASH_MAX) &&
-		         !gltf_token_to_double_array(gltf, data, tokens, itoken, accessor->max, 4))
+		         !gltf_token_to_real_array(gltf, data, tokens, itoken, accessor->max, 4))
 			return false;
 		else if ((identifier_hash == HASH_SPARSE) &&
 		         !gltf_accessor_parse_sparse(gltf, data, tokens, itoken, &accessor->sparse))

@@ -103,7 +103,7 @@ gltf_material_parse_occlusiontexture(gltf_t* gltf, const char* buffer, json_toke
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if ((identifier_hash == HASH_STRENGTH) &&
-		    !gltf_token_to_double(gltf, buffer, tokens, itoken, &material->occlusion_strength))
+		    !gltf_token_to_real(gltf, buffer, tokens, itoken, &material->occlusion_strength))
 			return false;
 
 		itoken = tokens[itoken].sibling;
@@ -123,7 +123,7 @@ gltf_material_parse_normaltexture(gltf_t* gltf, const char* buffer, json_token_t
 		string_const_t identifier = json_token_identifier(gltf->buffer, tokens + itoken);
 		hash_t identifier_hash = string_hash(STRING_ARGS(identifier));
 		if ((identifier_hash == HASH_SCALE) &&
-		    !gltf_token_to_double(gltf, buffer, tokens, itoken, &material->normal_scale))
+		    !gltf_token_to_real(gltf, buffer, tokens, itoken, &material->normal_scale))
 			return false;
 
 		itoken = tokens[itoken].sibling;
@@ -155,14 +155,14 @@ gltf_material_parse_pbrmetallicroughness(gltf_t* gltf, const char* buffer, json_
 		                                          &metallic_roughness->metallic_roughness_texture))
 			return false;
 		else if ((identifier_hash == HASH_BASECOLORFACTOR) &&
-		         !gltf_token_to_double_array(gltf, buffer, tokens, itoken,
-		                                     (double*)metallic_roughness->base_color_factor, 4))
+		         !gltf_token_to_real_array(gltf, buffer, tokens, itoken,
+										   metallic_roughness->base_color_factor, 4))
 			return false;
 		else if ((identifier_hash == HASH_METALLICFACTOR) &&
-		         !gltf_token_to_double(gltf, buffer, tokens, itoken, (double*)&metallic_roughness->metallic_factor))
+		         !gltf_token_to_real(gltf, buffer, tokens, itoken, (double*)&metallic_roughness->metallic_factor))
 			return false;
 		else if ((identifier_hash == HASH_ROUGHNESSFACTOR) &&
-		         !gltf_token_to_double(gltf, buffer, tokens, itoken, (double*)&metallic_roughness->roughness_factor))
+		         !gltf_token_to_real(gltf, buffer, tokens, itoken, (double*)&metallic_roughness->roughness_factor))
 			return false;
 
 		itoken = tokens[itoken].sibling;
@@ -193,7 +193,7 @@ gltf_materials_parse_material(gltf_t* gltf, const char* buffer, json_token_t* to
 			gltf_material_parse_alphamode(gltf, buffer, tokens, itoken, material);
 		else if ((identifier_hash == HASH_ALPHACUTOFF) &&
 		         ((tokens[itoken].type == JSON_STRING) || (tokens[itoken].type == JSON_PRIMITIVE)) &&
-		         !gltf_token_to_double(gltf, buffer, tokens, itoken, &material->alpha_cutoff))
+		         !gltf_token_to_real(gltf, buffer, tokens, itoken, &material->alpha_cutoff))
 			return false;
 		else if ((identifier_hash == HASH_DOUBLESIDED) &&
 		         ((tokens[itoken].type == JSON_STRING) || (tokens[itoken].type == JSON_PRIMITIVE)) &&
@@ -203,7 +203,7 @@ gltf_materials_parse_material(gltf_t* gltf, const char* buffer, json_token_t* to
 		         !gltf_material_parse_textureinfo(gltf, buffer, tokens, itoken, &material->emissive_texture))
 			return false;
 		else if ((identifier_hash == HASH_EMISSIVEFACTOR) &&
-		         !gltf_token_to_double_array(gltf, buffer, tokens, itoken, (double*)material->emissive_factor, 3))
+		         !gltf_token_to_real_array(gltf, buffer, tokens, itoken, (real*)material->emissive_factor, 3))
 			return false;
 		else if ((identifier_hash == HASH_NORMALTEXTURE) &&
 		         !gltf_material_parse_normaltexture(gltf, buffer, tokens, itoken, material))

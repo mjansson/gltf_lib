@@ -160,8 +160,8 @@ struct gltf_accessor_t {
 	gltf_component_type component_type;
 	uint count;
 	bool normalized;
-	double min[4];
-	double max[4];
+	real min[4];
+	real max[4];
 	gltf_accessor_sparse_t sparse;
 	string_const_t extensions;
 	string_const_t extras;
@@ -199,10 +199,10 @@ struct gltf_texture_info_t {
 };
 
 struct gltf_transform_t {
-	double scale[3];
-	double rotation[4];
-	double translation[3];
-	double matrix[4][4];
+	real scale[3];
+	real rotation[4];
+	real translation[3];
+	real matrix[4][4];
 	bool has_matrix;
 };
 
@@ -245,10 +245,10 @@ struct gltf_node_t {
 
 struct gltf_pbr_metallic_roughness_t {
 	gltf_texture_info_t base_color_texture;
-	double base_color_factor[4];
+	real base_color_factor[4];
 	gltf_texture_info_t metallic_roughness_texture;
-	double metallic_factor;
-	double roughness_factor;
+	real metallic_factor;
+	real roughness_factor;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -257,13 +257,13 @@ struct gltf_material_t {
 	string_const_t name;
 	gltf_pbr_metallic_roughness_t metallic_roughness;
 	gltf_texture_info_t normal_texture;
-	double normal_scale;
+	real normal_scale;
 	gltf_texture_info_t occlusion_texture;
-	double occlusion_strength;
+	real occlusion_strength;
 	gltf_texture_info_t emissive_texture;
-	double emissive_factor[3];
+	real emissive_factor[3];
 	gltf_alpha_mode alpha_mode;
-	double alpha_cutoff;
+	real alpha_cutoff;
 	bool double_sided;
 	string_const_t extensions;
 	string_const_t extras;

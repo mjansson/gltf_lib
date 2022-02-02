@@ -86,14 +86,14 @@ bool
 gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, uint* value);
 
 bool
-gltf_token_to_double(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* value);
+gltf_token_to_real(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, real* value);
 
 bool
 gltf_token_to_integer_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, uint* values,
                             uint dim);
 
 bool
-gltf_token_to_double_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, double* values,
+gltf_token_to_real_array(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, real* values,
                            uint dim);
 
 bool

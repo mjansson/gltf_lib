@@ -83,17 +83,17 @@ gltf_nodes_parse_node(gltf_t* gltf, const char* data, json_token_t* tokens, size
 			return false;
 
 		else if ((identifier_hash == HASH_SCALE) &&
-		         !gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.scale, 3))
+		         !gltf_token_to_real_array(gltf, data, tokens, itoken, (real*)node->transform.scale, 3))
 			return false;
 		else if ((identifier_hash == HASH_ROTATION) &&
-		         !gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.rotation, 4))
+		         !gltf_token_to_real_array(gltf, data, tokens, itoken, (real*)node->transform.rotation, 4))
 			return false;
 		else if ((identifier_hash == HASH_TRANSLATION) &&
-		         !gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.translation, 3))
+		         !gltf_token_to_real_array(gltf, data, tokens, itoken, (real*)node->transform.translation, 3))
 			return false;
 		else if (identifier_hash == HASH_MATRIX) {
 			node->transform.has_matrix = true;
-			if (!gltf_token_to_double_array(gltf, data, tokens, itoken, (double*)node->transform.matrix, 16))
+			if (!gltf_token_to_real_array(gltf, data, tokens, itoken, (real*)node->transform.matrix, 16))
 				return false;
 		} else if ((identifier_hash == HASH_EXTENSIONS) && (tokens[itoken].type == JSON_STRING))
 			node->extensions = json_token_value(data, tokens + itoken);
