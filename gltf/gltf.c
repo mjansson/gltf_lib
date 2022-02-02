@@ -24,6 +24,12 @@
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
+#if FOUNDATION_COMPILER_CLANG
+#if __has_warning("-Wfloat-equal")
+#pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+#endif
+
 extern int
 gltf_module_stream_initialize(void);
 
@@ -575,7 +581,7 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 			bool has_matrix = node->transform.has_matrix;
 			bool identity_matrix = false;
 			if (has_matrix) {
-				if ((node->transform.matrix[0][0] == 1) && (node->transform.matrix[1][1] == 1) && (node->transform.matrix[2][2] == 1) && (node->transform.matrix[3][3] && 1)) {
+				if ((node->transform.matrix[0][0] == 1) && (node->transform.matrix[1][1] == 1) && (node->transform.matrix[2][2] == 1) && (node->transform.matrix[3][3] == 1)) {
 					if ((node->transform.matrix[0][1] == 0) && (node->transform.matrix[0][2] == 0) && (node->transform.matrix[0][3] == 0) &&
 						(node->transform.matrix[1][0] == 0) && (node->transform.matrix[1][2] == 0) && (node->transform.matrix[1][3] == 0) &&
 						(node->transform.matrix[2][0] == 0) && (node->transform.matrix[2][1] == 0) && (node->transform.matrix[2][3] == 0) &&
@@ -585,10 +591,10 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 			}
 			if (has_matrix && !identity_matrix) {
 				stream_write(stream, STRING_CONST(",\n\t\t\t\"matrix\": [\n"));
-				stream_write_format(stream, STRING_CONST("\t\t\t\t%f, %f, %f, %f,\n"), node->transform.matrix[0][0], node->transform.matrix[0][1], node->transform.matrix[0][2], node->transform.matrix[0][3]);
-				stream_write_format(stream, STRING_CONST("\t\t\t\t%f, %f, %f, %f,\n"), node->transform.matrix[1][0], node->transform.matrix[1][1], node->transform.matrix[1][2], node->transform.matrix[1][3]);
-				stream_write_format(stream, STRING_CONST("\t\t\t\t%f, %f, %f, %f,\n"), node->transform.matrix[2][0], node->transform.matrix[2][1], node->transform.matrix[2][2], node->transform.matrix[2][3]);
-				stream_write_format(stream, STRING_CONST("\t\t\t\t%f, %f, %f, %f\n"), node->transform.matrix[3][0], node->transform.matrix[3][1], node->transform.matrix[3][2], node->transform.matrix[3][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"), (double)node->transform.matrix[0][0], (double)node->transform.matrix[0][1], (double)node->transform.matrix[0][2], (double)node->transform.matrix[0][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"), (double)node->transform.matrix[1][0], (double)node->transform.matrix[1][1], (double)node->transform.matrix[1][2], (double)node->transform.matrix[1][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"), (double)node->transform.matrix[2][0], (double)node->transform.matrix[2][1], (double)node->transform.matrix[2][2], (double)node->transform.matrix[2][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g\n"), (double)node->transform.matrix[3][0], (double)node->transform.matrix[3][1], (double)node->transform.matrix[3][2], (double)node->transform.matrix[3][3]);
 				stream_write(stream, STRING_CONST("\t\t\t]"));
 			}
 			stream_write(stream, STRING_CONST("\n\t\t}"));

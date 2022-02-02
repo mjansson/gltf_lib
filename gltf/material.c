@@ -159,10 +159,10 @@ gltf_material_parse_pbrmetallicroughness(gltf_t* gltf, const char* buffer, json_
 										   metallic_roughness->base_color_factor, 4))
 			return false;
 		else if ((identifier_hash == HASH_METALLICFACTOR) &&
-		         !gltf_token_to_real(gltf, buffer, tokens, itoken, (double*)&metallic_roughness->metallic_factor))
+		         !gltf_token_to_real(gltf, buffer, tokens, itoken, (real*)&metallic_roughness->metallic_factor))
 			return false;
 		else if ((identifier_hash == HASH_ROUGHNESSFACTOR) &&
-		         !gltf_token_to_real(gltf, buffer, tokens, itoken, (double*)&metallic_roughness->roughness_factor))
+		         !gltf_token_to_real(gltf, buffer, tokens, itoken, (real*)&metallic_roughness->roughness_factor))
 			return false;
 
 		itoken = tokens[itoken].sibling;

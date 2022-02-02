@@ -146,6 +146,7 @@ gltf_scene_add(gltf_t* gltf) {
 
 void
 gltf_scene_add_node(gltf_t* gltf, gltf_scene_t* scene, uint node) {
+	FOUNDATION_UNUSED(gltf);
 	uint nodes_count = scene->nodes_count;
 	size_t old_storage_size = sizeof(uint) * nodes_count;
 	size_t storage_size = sizeof(uint) * (++nodes_count);
