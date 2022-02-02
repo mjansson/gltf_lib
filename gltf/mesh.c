@@ -278,6 +278,7 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 	virtualarray_resize(gltf->output_buffer, current_offset + (sizeof(float) * mesh->vertex.count * 3));
 
 	// Coordinates
+	uint coordinate_accessor = GLTF_INVALID_INDEX;
 	{
 		gltf_accessor_t accessor = {0};
 		accessor.type = GLTF_DATA_VEC3;
@@ -291,6 +292,8 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 		buffer_view.byte_offset = current_offset;
 		buffer_view.byte_length = sizeof(float) * accessor.count * 3;
 
+		vector_t vmin = vector_uniform(REAL_MAX);
+		vector_t vmax = vector_uniform(-REAL_MAX);
 		float* vertex_component = pointer_offset(gltf->output_buffer->storage, buffer_view.byte_offset);
 		for (uint ivert = 0; ivert < mesh->vertex.count; ++ivert) {
 			const mesh_vertex_t* mesh_vertex = bucketarray_get_const(&mesh->vertex, ivert);
@@ -298,9 +301,74 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 			*vertex_component++ = vector_x(*mesh_coordinate);
 			*vertex_component++ = vector_y(*mesh_coordinate);
 			*vertex_component++ = vector_z(*mesh_coordinate);
+			vmin = vector_min(vmin, *mesh_coordinate);
+			vmax = vector_max(vmax, *mesh_coordinate);
 		}
 
 		current_offset += buffer_view.byte_length;
+
+		accessor.min[0] = vector_x(vmin);
+		accessor.min[1] = vector_y(vmin);
+		accessor.min[2] = vector_z(vmin);
+		accessor.min[3] = 1;
+		accessor.max[0] = vector_x(vmax);
+		accessor.max[1] = vector_y(vmax);
+		accessor.max[2] = vector_z(vmax);
+		accessor.max[3] = 1;
+		
+		coordinate_accessor = gltf->accessors_count;
+
+		old_storage_size = sizeof(gltf_buffer_view_t) * gltf->buffer_views_count;
+		storage_size = sizeof(gltf_buffer_view_t) * (gltf->buffer_views_count + 1);
+		gltf->buffer_views = memory_reallocate(gltf->buffer_views, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		gltf->buffer_views[gltf->buffer_views_count++] = buffer_view;
+
+		old_storage_size = sizeof(gltf_accessor_t) * gltf->accessors_count;
+		storage_size = sizeof(gltf_accessor_t) * (gltf->accessors_count + 1);
+		gltf->accessors = memory_reallocate(gltf->accessors, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		gltf->accessors[gltf->accessors_count++] = accessor;
+	}
+
+	// Normals
+	uint normal_accessor = GLTF_INVALID_INDEX;
+	if (mesh->normal.count) {
+		gltf_accessor_t accessor = {0};
+		accessor.type = GLTF_DATA_VEC3;
+		accessor.component_type = GLTF_COMPONENT_FLOAT;
+		accessor.count = (uint)mesh->vertex.count;
+		accessor.byte_offset = 0;
+		accessor.buffer_view = gltf->buffer_views_count;
+
+		gltf_buffer_view_t buffer_view = {0};
+		buffer_view.buffer = 0;
+		buffer_view.byte_offset = current_offset;
+		buffer_view.byte_length = sizeof(float) * accessor.count * 3;
+
+		vector_t vmin = vector_uniform(REAL_MAX);
+		vector_t vmax = vector_uniform(-REAL_MAX);
+		float* normal_component = pointer_offset(gltf->output_buffer->storage, buffer_view.byte_offset);
+		for (uint ivert = 0; ivert < mesh->vertex.count; ++ivert) {
+			const mesh_vertex_t* mesh_vertex = bucketarray_get_const(&mesh->vertex, ivert);
+			const mesh_normal_t* mesh_normal = bucketarray_get_const(&mesh->normal, mesh_vertex->normal);
+			*normal_component++ = vector_x(*mesh_normal);
+			*normal_component++ = vector_y(*mesh_normal);
+			*normal_component++ = vector_z(*mesh_normal);
+			vmin = vector_min(vmin, *mesh_normal);
+			vmax = vector_max(vmax, *mesh_normal);
+		}
+
+		current_offset += buffer_view.byte_length;
+
+		accessor.min[0] = vector_x(vmin);
+		accessor.min[1] = vector_y(vmin);
+		accessor.min[2] = vector_z(vmin);
+		accessor.min[3] = 1;
+		accessor.max[0] = vector_x(vmax);
+		accessor.max[1] = vector_y(vmax);
+		accessor.max[2] = vector_z(vmax);
+		accessor.max[3] = 1;
+		
+		normal_accessor = gltf->accessors_count;
 
 		old_storage_size = sizeof(gltf_buffer_view_t) * gltf->buffer_views_count;
 		storage_size = sizeof(gltf_buffer_view_t) * (gltf->buffer_views_count + 1);
@@ -362,6 +430,8 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 		// All primitives share the vertex attribute accessors
 		primitive->material = current_material;
 		primitive->mode = GLTF_TRIANGLES;
+		primitive->attributes[GLTF_POSITION] = coordinate_accessor;
+		primitive->attributes[GLTF_NORMAL] = normal_accessor;
 		primitive->indices = gltf->accessors_count;
 
 		gltf_accessor_t accessor = {0};

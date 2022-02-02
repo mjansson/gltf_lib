@@ -27,3 +27,6 @@ gltf_scene_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t 
 
 GLTF_API gltf_scene_t*
 gltf_scene_add(gltf_t* gltf);
+
+GLTF_API void
+gltf_scene_add_node(gltf_t* gltf, gltf_scene_t* scene, uint node);

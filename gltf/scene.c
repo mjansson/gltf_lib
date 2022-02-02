@@ -139,5 +139,17 @@ gltf_scene_add(gltf_t* gltf) {
 	size_t storage_size = sizeof(gltf_scene_t) * (++scenes_count);
 	gltf->scenes_count = (uint)scenes_count;
 	gltf->scenes = memory_reallocate(gltf->scenes, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	if ((gltf->scene == GLTF_INVALID_INDEX) && (scenes_count == 1))
+		gltf->scene = 0;
 	return pointer_offset(gltf->scenes, old_storage_size);
+}
+
+void
+gltf_scene_add_node(gltf_t* gltf, gltf_scene_t* scene, uint node) {
+	uint nodes_count = scene->nodes_count;
+	size_t old_storage_size = sizeof(uint) * nodes_count;
+	size_t storage_size = sizeof(uint) * (++nodes_count);
+	scene->nodes_count = (uint)nodes_count;
+	scene->nodes = memory_reallocate(scene->nodes, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	scene->nodes[nodes_count - 1] = node;
 }

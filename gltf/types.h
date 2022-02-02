@@ -20,6 +20,8 @@
 #include <foundation/platform.h>
 #include <foundation/types.h>
 
+#include <vector/types.h>
+
 #include <gltf/build.h>
 
 #if defined(GLTF_COMPILE) && GLTF_COMPILE

@@ -21,3 +21,6 @@ gltf_nodes_finalize(gltf_t* gltf);
 
 GLTF_API bool
 gltf_nodes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken);
+
+GLTF_API uint
+gltf_node_add(gltf_t* gltf, const char* name, size_t name_length, uint mesh_index, const matrix_t* transform);

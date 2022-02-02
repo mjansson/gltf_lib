@@ -17,6 +17,7 @@
 
 #include <foundation/memory.h>
 #include <foundation/json.h>
+#include <foundation/array.h>
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
@@ -133,4 +134,30 @@ gltf_nodes_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t it
 	}
 
 	return true;
+}
+
+uint
+gltf_node_add(gltf_t* gltf, const char* name, size_t name_length, uint mesh_index, const matrix_t* transform) {
+	uint nodes_count = gltf->nodes_count;
+	size_t old_storage_size = sizeof(gltf_node_t) * nodes_count;
+	size_t storage_size = sizeof(gltf_node_t) * (++nodes_count);
+	gltf->nodes_count = (uint)nodes_count;
+	gltf->nodes = memory_reallocate(gltf->nodes, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	gltf_node_t* gltf_node = pointer_offset(gltf->nodes, old_storage_size);
+
+	string_t node_name = string_clone(name, name_length);
+	array_push(gltf->string_array, node_name);
+
+	gltf_node->name = string_const(STRING_ARGS(node_name));
+	gltf_node->mesh = mesh_index;
+	if (transform) {
+		gltf_node->transform.has_matrix = 1;
+		for (uint irow = 0; irow < 4; ++irow) {
+			for (uint icol = 0; icol < 4; ++icol) {
+				gltf_node->transform.matrix[irow][icol] = transform->frow[irow][icol];
+			}
+		}
+	}
+	
+	return (nodes_count - 1);
 }
