@@ -761,10 +761,10 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 		size_t file_size = stream_tell(stream);
 
 		// Now fill in sizes
-		stream_seek(stream, json_size_offset, STREAM_SEEK_BEGIN);
+		stream_seek(stream, (ssize_t)json_size_offset, STREAM_SEEK_BEGIN);
 		stream_write_uint32(stream, (uint)json_chunk_length);
 
-		stream_seek(stream, file_size_offset, STREAM_SEEK_BEGIN);
+		stream_seek(stream, (ssize_t)file_size_offset, STREAM_SEEK_BEGIN);
 		stream_write_uint32(stream, (uint)file_size);
 	}
 
