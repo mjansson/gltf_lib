@@ -207,8 +207,7 @@ struct gltf_transform_t {
 };
 
 struct gltf_attribute_t {
-	const char* semantic;
-	size_t semantic_length;
+	string_const_t semantic;
 	uint accessor;
 };
 
@@ -216,8 +215,8 @@ struct gltf_primitive_t {
 	uint material;
 	uint indices;
 	uint attributes[GLTF_ATTRIBUTE_COUNT];
+	//! Array of custom attributes
 	gltf_attribute_t* attributes_custom;
-	uint attributes_custom_count;
 	gltf_primitive_mode mode;
 	string_const_t extensions;
 	string_const_t extras;
@@ -225,8 +224,8 @@ struct gltf_primitive_t {
 
 struct gltf_mesh_t {
 	string_const_t name;
+	//! Array of primitives
 	gltf_primitive_t* primitives;
-	uint primitives_count;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -288,8 +287,8 @@ struct gltf_texture_t {
 
 struct gltf_scene_t {
 	string_const_t name;
+	//! Array of root nodes
 	uint* nodes;
-	uint nodes_count;
 	string_const_t extensions;
 	string_const_t extras;
 };
@@ -318,21 +317,22 @@ struct gltf_t {
 	string_const_t* extensions_used;
 	uint extensions_required_count;
 	string_const_t* extensions_required;
+	//! Array of accessors
 	gltf_accessor_t* accessors;
-	uint accessors_count;
+	//! Array of buffer views
 	gltf_buffer_view_t* buffer_views;
-	uint buffer_views_count;
+	//! Array of buffers
 	gltf_buffer_t* buffers;
-	uint buffers_count;
+	//! Default scene index
 	uint scene;
+	//! Array of scenes
 	gltf_scene_t* scenes;
-	uint scenes_count;
+	//! Array of nodes
 	gltf_node_t* nodes;
-	uint nodes_count;
+	//! Array of materials
 	gltf_material_t* materials;
-	uint materials_count;
+	//! Array of meshes
 	gltf_mesh_t* meshes;
-	uint meshes_count;
 	gltf_texture_t* textures;
 	uint textures_count;
 	gltf_image_t* images;

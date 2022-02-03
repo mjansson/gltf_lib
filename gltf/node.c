@@ -24,12 +24,12 @@
 void
 gltf_nodes_finalize(gltf_t* gltf) {
 	if (gltf->nodes) {
-		for (uint inode = 0; inode < gltf->nodes_count; ++inode) {
+		for (uint inode = 0, nodes_count = array_count(gltf->nodes); inode < nodes_count; ++inode) {
 			gltf_node_t* node = gltf->nodes + inode;
 			if (node->children_ext)
 				memory_deallocate(node->children_ext);
 		}
-		memory_deallocate(gltf->nodes);
+		array_deallocate(gltf->nodes);
 	}
 }
 
@@ -116,20 +116,18 @@ gltf_nodes_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t it
 	size_t nodes_count = tokens[itoken].value_length;
 	if (nodes_count > GLTF_MAX_INDEX)
 		return false;
+
+	array_resize(gltf->nodes, nodes_count);
+
 	if (!nodes_count)
 		return true;
 
-	size_t storage_size = sizeof(gltf_node_t) * nodes_count;
-	gltf_nodes_finalize(gltf);
-	gltf->nodes_count = (uint)nodes_count;
-	gltf->nodes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-
 	uint icounter = 0;
-	size_t iscene = tokens[itoken].child;
-	while (iscene) {
-		if (!gltf_nodes_parse_node(gltf, data, tokens, iscene, gltf->nodes + icounter))
+	size_t inode = tokens[itoken].child;
+	while (inode) {
+		if (!gltf_nodes_parse_node(gltf, data, tokens, inode, gltf->nodes + icounter))
 			return false;
-		iscene = tokens[iscene].sibling;
+		inode = tokens[inode].sibling;
 		++icounter;
 	}
 
@@ -138,26 +136,23 @@ gltf_nodes_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_t it
 
 uint
 gltf_node_add(gltf_t* gltf, const char* name, size_t name_length, uint mesh_index, const matrix_t* transform) {
-	uint nodes_count = gltf->nodes_count;
-	size_t old_storage_size = sizeof(gltf_node_t) * nodes_count;
-	size_t storage_size = sizeof(gltf_node_t) * (++nodes_count);
-	gltf->nodes_count = (uint)nodes_count;
-	gltf->nodes = memory_reallocate(gltf->nodes, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	gltf_node_t* gltf_node = pointer_offset(gltf->nodes, old_storage_size);
+	gltf_node_t gltf_node = {0};
 
 	string_t node_name = string_clone(name, name_length);
 	array_push(gltf->string_array, node_name);
 
-	gltf_node->name = string_const(STRING_ARGS(node_name));
-	gltf_node->mesh = mesh_index;
+	gltf_node.name = string_const(STRING_ARGS(node_name));
+	gltf_node.mesh = mesh_index;
 	if (transform) {
-		gltf_node->transform.has_matrix = 1;
+		gltf_node.transform.has_matrix = 1;
 		for (uint irow = 0; irow < 4; ++irow) {
 			for (uint icol = 0; icol < 4; ++icol) {
-				gltf_node->transform.matrix[irow][icol] = transform->frow[irow][icol];
+				gltf_node.transform.matrix[irow][icol] = transform->frow[irow][icol];
 			}
 		}
 	}
-	
-	return (nodes_count - 1);
+
+	array_push_memcpy(gltf->nodes, &gltf_node);
+
+	return (array_count(gltf->nodes) - 1);
 }

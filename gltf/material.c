@@ -18,14 +18,14 @@
 
 #include <foundation/memory.h>
 #include <foundation/json.h>
+#include <foundation/array.h>
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
 void
 gltf_materials_finalize(gltf_t* gltf) {
-	if (gltf->materials) {
-		memory_deallocate(gltf->materials);
-	}
+	if (gltf->materials)
+		array_deallocate(gltf->materials);
 }
 
 static void
@@ -155,8 +155,7 @@ gltf_material_parse_pbrmetallicroughness(gltf_t* gltf, const char* buffer, json_
 		                                          &metallic_roughness->metallic_roughness_texture))
 			return false;
 		else if ((identifier_hash == HASH_BASECOLORFACTOR) &&
-		         !gltf_token_to_real_array(gltf, buffer, tokens, itoken,
-										   metallic_roughness->base_color_factor, 4))
+		         !gltf_token_to_real_array(gltf, buffer, tokens, itoken, metallic_roughness->base_color_factor, 4))
 			return false;
 		else if ((identifier_hash == HASH_METALLICFACTOR) &&
 		         !gltf_token_to_real(gltf, buffer, tokens, itoken, (real*)&metallic_roughness->metallic_factor))
@@ -231,13 +230,11 @@ gltf_materials_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, siz
 	size_t materials_count = tokens[itoken].value_length;
 	if (materials_count > GLTF_MAX_INDEX)
 		return false;
+
+	array_resize(gltf->materials, materials_count);
+
 	if (!materials_count)
 		return true;
-
-	size_t storage_size = sizeof(gltf_material_t) * materials_count;
-	gltf_materials_finalize(gltf);
-	gltf->materials_count = (uint)materials_count;
-	gltf->materials = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	uint icounter = 0;
 	size_t imat = tokens[itoken].child;

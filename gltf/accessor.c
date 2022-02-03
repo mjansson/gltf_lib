@@ -18,13 +18,13 @@
 
 #include <foundation/memory.h>
 #include <foundation/json.h>
+#include <foundation/array.h>
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
 void
 gltf_accessors_finalize(gltf_t* gltf) {
-	if (gltf->accessors)
-		memory_deallocate(gltf->accessors);
+	array_deallocate(gltf->accessors);
 }
 
 static void
@@ -188,13 +188,10 @@ gltf_accessors_parse(gltf_t* gltf, const char* data, json_token_t* tokens, size_
 	size_t accessors_count = tokens[itoken].value_length;
 	if (accessors_count > GLTF_MAX_INDEX)
 		return false;
+
+	array_resize(gltf->accessors, accessors_count);
 	if (!accessors_count)
 		return true;
-
-	size_t storage_size = sizeof(gltf_accessor_t) * accessors_count;
-	gltf_buffers_finalize(gltf);
-	gltf->accessors_count = (uint)accessors_count;
-	gltf->accessors = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT);
 
 	uint icounter = 0;
 	size_t iscene = tokens[itoken].child;

@@ -18,15 +18,16 @@
 
 #include <foundation/memory.h>
 #include <foundation/json.h>
+#include <foundation/array.h>
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
 void
 gltf_scenes_finalize(gltf_t* gltf) {
 	if (gltf->scenes) {
-		for (uint iscene = 0; iscene < gltf->scenes_count; ++iscene)
-			memory_deallocate(gltf->scenes[iscene].nodes);
-		memory_deallocate(gltf->scenes);
+		for (uint iscene = 0, scenes_count = array_count(gltf->scenes); iscene < scenes_count; ++iscene)
+			array_deallocate(gltf->scenes[iscene].nodes);
+		array_deallocate(gltf->scenes);
 	}
 }
 
@@ -41,11 +42,11 @@ gltf_scene_parse_nodes(gltf_t* gltf, const char* buffer, json_token_t* tokens, s
 	size_t nodes_count = tokens[itoken].value_length;
 	if (nodes_count > GLTF_MAX_INDEX)
 		return false;
+
+	array_resize(scene->nodes, nodes_count);
+
 	if (!nodes_count)
 		return true;
-
-	scene->nodes_count = (uint)nodes_count;
-	scene->nodes = memory_allocate(HASH_GLTF, sizeof(uint) * nodes_count, 0, MEMORY_PERSISTENT);
 
 	uint icounter = 0;
 	size_t inode = tokens[itoken].child;
@@ -100,13 +101,11 @@ gltf_scenes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 	size_t scenes_count = tokens[itoken].value_length;
 	if (scenes_count > GLTF_MAX_INDEX)
 		return false;
+
+	array_resize(gltf->scenes, scenes_count);
+
 	if (!scenes_count)
 		return true;
-
-	size_t storage_size = sizeof(gltf_scene_t) * scenes_count;
-	gltf_scenes_finalize(gltf);
-	gltf->scenes_count = (uint)scenes_count;
-	gltf->scenes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	uint icounter = 0;
 	size_t iscene = tokens[itoken].child;
@@ -134,23 +133,15 @@ gltf_scene_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t 
 
 gltf_scene_t*
 gltf_scene_add(gltf_t* gltf) {
-	uint scenes_count = gltf->scenes_count;
-	size_t old_storage_size = sizeof(gltf_scene_t) * scenes_count;
-	size_t storage_size = sizeof(gltf_scene_t) * (++scenes_count);
-	gltf->scenes_count = (uint)scenes_count;
-	gltf->scenes = memory_reallocate(gltf->scenes, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	if ((gltf->scene == GLTF_INVALID_INDEX) && (scenes_count == 1))
+	gltf_scene_t scene = {0};
+	array_push(gltf->scenes, scene);
+	if ((gltf->scene == GLTF_INVALID_INDEX) && (array_count(gltf->scenes) == 1))
 		gltf->scene = 0;
-	return pointer_offset(gltf->scenes, old_storage_size);
+	return gltf->scenes + (array_count(gltf->scenes) - 1);
 }
 
 void
 gltf_scene_add_node(gltf_t* gltf, gltf_scene_t* scene, uint node) {
 	FOUNDATION_UNUSED(gltf);
-	uint nodes_count = scene->nodes_count;
-	size_t old_storage_size = sizeof(uint) * nodes_count;
-	size_t storage_size = sizeof(uint) * (++nodes_count);
-	scene->nodes_count = (uint)nodes_count;
-	scene->nodes = memory_reallocate(scene->nodes, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	scene->nodes[nodes_count - 1] = node;
+	array_push(scene->nodes, node);
 }

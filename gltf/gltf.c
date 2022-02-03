@@ -95,8 +95,7 @@ gltf_finalize(gltf_t* gltf) {
 }
 
 bool
-gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken,
-                      uint* value) {
+gltf_token_to_integer(const gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken, uint* value) {
 	FOUNDATION_UNUSED(gltf);
 	if (!itoken || ((tokens[itoken].type != JSON_PRIMITIVE) && (tokens[itoken].type != JSON_STRING))) {
 		log_error(HASH_GLTF, ERROR_INVALID_VALUE, STRING_CONST("Integer attribute has invalid type"));
@@ -368,24 +367,24 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 		log_infof(HASH_GLTF, STRING_CONST("Read %s file version %.*s - %.*s"),
 		          (gltf->file_type < GLTF_FILE_GLB) ? "glTF" : "GLB", STRING_FORMAT(gltf->asset.version),
 		          STRING_FORMAT(gltf->asset.generator));
-		log_infof(HASH_GLTF, STRING_CONST("  %u scenes"), gltf->scenes_count);
-		for (uint iscene = 0; iscene < gltf->scenes_count; ++iscene) {
+		log_infof(HASH_GLTF, STRING_CONST("  %u scenes"), array_count(gltf->scenes));
+		for (uint iscene = 0, scenes_count = array_count(gltf->scenes); iscene < scenes_count; ++iscene) {
 			gltf_scene_t* scene = gltf->scenes + iscene;
 			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" %u nodes"), iscene, STRING_FORMAT(scene->name),
-			          scene->nodes_count);
+			          array_count(scene->nodes));
 		}
-		log_infof(HASH_GLTF, STRING_CONST("  %u nodes"), gltf->nodes_count);
-		for (uint inode = 0; inode < gltf->nodes_count; ++inode) {
+		log_infof(HASH_GLTF, STRING_CONST("  %u nodes"), array_count(gltf->nodes));
+		for (uint inode = 0, nodes_count = array_count(gltf->nodes); inode < nodes_count; ++inode) {
 			gltf_node_t* node = gltf->nodes + inode;
 			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" mesh %d"), inode, STRING_FORMAT(node->name),
 			          (int)node->mesh);
 		}
-		log_infof(HASH_GLTF, STRING_CONST("  %u meshes"), gltf->meshes_count);
-		for (uint imesh = 0; imesh < gltf->meshes_count; ++imesh) {
+		log_infof(HASH_GLTF, STRING_CONST("  %u meshes"), array_count(gltf->meshes));
+		for (uint imesh = 0, meshes_count = array_count(gltf->meshes); imesh < meshes_count; ++imesh) {
 			gltf_mesh_t* mesh = gltf->meshes + imesh;
-			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" %d primitives"), imesh, STRING_FORMAT(mesh->name),
-			          (int)mesh->primitives_count);
-			for (uint iprim = 0; iprim < mesh->primitives_count; ++iprim) {
+			log_infof(HASH_GLTF, STRING_CONST("    %u: \"%.*s\" %u primitives"), imesh, STRING_FORMAT(mesh->name),
+			          array_count(mesh->primitives));
+			for (uint iprim = 0, primitives_count = array_count(mesh->primitives); iprim < primitives_count; ++iprim) {
 				gltf_primitive_t* prim = mesh->primitives + iprim;
 				log_infof(HASH_GLTF, STRING_CONST("      %u: type %d material %d"), iprim, prim->mode, prim->material);
 			}
@@ -404,8 +403,29 @@ exit:
 bool
 gltf_write(const gltf_t* gltf, stream_t* stream) {
 	stream_set_byteorder(stream, BYTEORDER_LITTLEENDIAN);
+
+	size_t file_size_offset = 8;
+	size_t json_size_offset = 12;
+	size_t json_start_offset = 20;
+	if ((gltf->file_type == GLTF_FILE_GLB) || (gltf->file_type == GLTF_FILE_GLB_EMBED)) {
+		// First write GLB header
+		gltf_glb_header_t glb_header;
+		glb_header.magic = 0x46546C67;
+		glb_header.version = 2;
+		glb_header.length = 0;
+
+		stream_set_binary(stream, true);
+		stream_write(stream, &glb_header, sizeof(glb_header));
+
+		// Now JSON chunk header (size, type)
+		stream_write_uint32(stream, 0);
+		stream_write_uint32(stream, 0x4E4F534A);
+
+		json_start_offset = stream_tell(stream);
+	}
+
 	stream_set_binary(stream, false);
-	
+
 	stream_write(stream, STRING_CONST("{\n"));
 	stream_write(stream, STRING_CONST("\t\"asset\": {\n"));
 	stream_write(stream, STRING_CONST("\t\t\"generator\": \"gltf_lib\",\n"));
@@ -414,62 +434,93 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 
 	if (gltf->output_buffer && gltf->output_buffer->count) {
 		char path_buffer[BUILD_MAX_PATHLEN];
-		string_const_t base_uri = stream_path(stream);
-		base_uri = path_base_file_name_with_directory(STRING_ARGS(base_uri));
-		string_t buffer_uri = string_concat(path_buffer, sizeof(path_buffer), STRING_ARGS(base_uri), STRING_CONST(".bin"));
-		string_const_t buffer_relative_uri = path_file_name(STRING_ARGS(buffer_uri));
+		string_t buffer_uri = string(0, 0);
+		string_const_t buffer_relative_uri;
 
 		stream_write(stream, STRING_CONST(",\n\t\"buffers\": [\n"));
 		stream_write(stream, STRING_CONST("\t\t{\n"));
-		stream_write_format(stream, STRING_CONST("\t\t\t\"uri\": \"%.*s\",\n"), STRING_FORMAT(buffer_relative_uri));
+		if (gltf->file_type == GLTF_FILE_GLB_EMBED) {
+			// Leave the buffer URI undefined as per GLB spec
+		} else if (gltf->file_type == GLTF_FILE_GLTF_EMBED) {
+			// TODO: Implement
+		} else {
+			string_const_t base_uri = stream_path(stream);
+			base_uri = path_base_file_name_with_directory(STRING_ARGS(base_uri));
+			buffer_uri = string_concat(path_buffer, sizeof(path_buffer), STRING_ARGS(base_uri), STRING_CONST(".bin"));
+			buffer_relative_uri = path_file_name(STRING_ARGS(buffer_uri));
+			stream_write_format(stream, STRING_CONST("\t\t\t\"uri\": \"%.*s\",\n"), STRING_FORMAT(buffer_relative_uri));
+		}
 		stream_write_format(stream, STRING_CONST("\t\t\t\"byteLength\": %" PRIsize "\n"), gltf->output_buffer->count);
 		stream_write(stream, STRING_CONST("\t\t}\n"));
 		stream_write(stream, STRING_CONST("\t]"));
-		
-		stream_t* buffer_stream = stream_open(STRING_ARGS(buffer_uri), STREAM_OUT | STREAM_BINARY | STREAM_CREATE | STREAM_TRUNCATE);
-		if (stream) {
-			stream_write(buffer_stream, gltf->output_buffer->storage, gltf->output_buffer->count);
-			stream_deallocate(buffer_stream);
-		} else {
-			log_errorf(HASH_GLTF, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Failed to open binary buffer stream: %.*s"), STRING_FORMAT(buffer_uri));
-			return false;
+
+		if ((gltf->file_type == GLTF_FILE_GLB) || (gltf->file_type == GLTF_FILE_GLTF)) {
+			stream_t* buffer_stream =
+			    stream_open(STRING_ARGS(buffer_uri), STREAM_OUT | STREAM_BINARY | STREAM_CREATE | STREAM_TRUNCATE);
+			if (stream) {
+				stream_write(buffer_stream, gltf->output_buffer->storage, gltf->output_buffer->count);
+				stream_deallocate(buffer_stream);
+			} else {
+				log_errorf(HASH_GLTF, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Failed to open binary buffer stream: %.*s"),
+				           STRING_FORMAT(buffer_uri));
+				return false;
+			}
 		}
 	}
 
-	if (gltf->buffer_views_count) {
+	if (array_count(gltf->buffer_views)) {
 		stream_write(stream, STRING_CONST(",\n\t\"bufferViews\": [\n"));
-		for (uint iview = 0; iview < gltf->buffer_views_count; ++iview) {
+		for (uint iview = 0, view_count = array_count(gltf->buffer_views); iview < view_count; ++iview) {
 			stream_write(stream, STRING_CONST("\t\t{\n"));
 			stream_write(stream, STRING_CONST("\t\t\t\"buffer\": 0,\n"));
-			stream_write_format(stream, STRING_CONST("\t\t\t\"byteOffset\": %u,\n"), gltf->buffer_views[iview].byte_offset);
-			stream_write_format(stream, STRING_CONST("\t\t\t\"byteLength\": %u\n"), gltf->buffer_views[iview].byte_length);
+			stream_write_format(stream, STRING_CONST("\t\t\t\"byteOffset\": %u,\n"),
+			                    gltf->buffer_views[iview].byte_offset);
+			stream_write_format(stream, STRING_CONST("\t\t\t\"byteLength\": %u\n"),
+			                    gltf->buffer_views[iview].byte_length);
 			stream_write(stream, STRING_CONST("\t\t}"));
-			if (iview < (gltf->buffer_views_count - 1))
+			if (iview < (view_count - 1))
 				stream_write(stream, STRING_CONST(","));
 			stream_write(stream, STRING_CONST("\n"));
 		}
 		stream_write(stream, STRING_CONST("\t]"));
 	}
-	
-	if (gltf->accessors_count) {
+
+	if (array_count(gltf->accessors)) {
 		stream_write(stream, STRING_CONST(",\n\t\"accessors\": [\n"));
-		for (uint iacc = 0; iacc < gltf->accessors_count; ++iacc) {
+		for (uint iacc = 0, accessor_count = array_count(gltf->accessors); iacc < accessor_count; ++iacc) {
 			stream_write(stream, STRING_CONST("\t\t{\n"));
 			stream_write_format(stream, STRING_CONST("\t\t\t\"bufferView\": %u,\n"), gltf->accessors[iacc].buffer_view);
-			stream_write_format(stream, STRING_CONST("\t\t\t\"componentType\": %u,\n"), gltf->accessors[iacc].component_type);
+			stream_write_format(stream, STRING_CONST("\t\t\t\"componentType\": %u,\n"),
+			                    gltf->accessors[iacc].component_type);
 			stream_write_format(stream, STRING_CONST("\t\t\t\"count\": %u,\n"), gltf->accessors[iacc].count);
 
 			uint component_count = 0;
 			const char* typestr = "SCALAR";
 			switch (gltf->accessors[iacc].type) {
-				case GLTF_DATA_VEC2: typestr = "VEC2"; component_count = 2; break;
-				case GLTF_DATA_VEC3: typestr = "VEC3"; component_count = 3; break;
-				case GLTF_DATA_VEC4: typestr = "VEC4"; component_count = 4; break;
-				case GLTF_DATA_MAT2: typestr = "MAT2"; break;
-				case GLTF_DATA_MAT3: typestr = "MAT3"; break;
-				case GLTF_DATA_MAT4: typestr = "MAT4"; break;
+				case GLTF_DATA_VEC2:
+					typestr = "VEC2";
+					component_count = 2;
+					break;
+				case GLTF_DATA_VEC3:
+					typestr = "VEC3";
+					component_count = 3;
+					break;
+				case GLTF_DATA_VEC4:
+					typestr = "VEC4";
+					component_count = 4;
+					break;
+				case GLTF_DATA_MAT2:
+					typestr = "MAT2";
+					break;
+				case GLTF_DATA_MAT3:
+					typestr = "MAT3";
+					break;
+				case GLTF_DATA_MAT4:
+					typestr = "MAT4";
+					break;
 				case GLTF_DATA_SCALAR:
-				default: break;
+				default:
+					break;
 			}
 			stream_write_format(stream, STRING_CONST("\t\t\t\"type\": \"%s\""), typestr);
 			if (component_count) {
@@ -498,24 +549,26 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 				stream_write(stream, STRING_CONST("\t\t\t]"));
 			}
 			stream_write(stream, STRING_CONST("\n\t\t}"));
-			if (iacc < (gltf->accessors_count - 1))
+			if (iacc < (accessor_count - 1))
 				stream_write(stream, STRING_CONST(","));
 			stream_write(stream, STRING_CONST("\n"));
 		}
 		stream_write(stream, STRING_CONST("\t]"));
 	}
 
-	if (gltf->meshes_count) {
+	if (array_count(gltf->meshes)) {
 		stream_write(stream, STRING_CONST(",\n\t\"meshes\": [\n"));
-		for (uint imesh = 0; imesh < gltf->meshes_count; ++imesh) {
+		for (uint imesh = 0, meshes_count = array_count(gltf->meshes); imesh < meshes_count; ++imesh) {
 			gltf_mesh_t* mesh = gltf->meshes + imesh;
 			stream_write(stream, STRING_CONST("\t\t{\n"));
 			string_const_t mesh_name = mesh->name;
 			if (!mesh_name.length)
 				mesh_name = string_const(STRING_CONST("<unnamed>"));
-			stream_write_format(stream, STRING_CONST("\t\t\t\"name\": \"%.*s\",\n"), STRING_FORMAT(mesh_name));
-			stream_write(stream, STRING_CONST("\t\t\t\"primitives\": [\n"));
-			for (uint iprim = 0; iprim < mesh->primitives_count; ++iprim) {
+			stream_write_format(stream, STRING_CONST("\t\t\t\"name\": \"%.*s\""), STRING_FORMAT(mesh_name));
+			uint primitives_count = array_count(mesh->primitives);
+			if (primitives_count)
+				stream_write(stream, STRING_CONST(",\n\t\t\t\"primitives\": [\n"));
+			for (uint iprim = 0; iprim < primitives_count; ++iprim) {
 				gltf_primitive_t* primitive = mesh->primitives + iprim;
 				stream_write(stream, STRING_CONST("\t\t\t\t{"));
 				uint token_count = 0;
@@ -528,19 +581,35 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 					} else {
 						stream_write(stream, STRING_CONST(",\n"));
 					}
-					
+
 					const char* attrib_name = "POSITION";
 					switch (iattrib) {
-						case GLTF_NORMAL: attrib_name = "NORMAL"; break;
-						case GLTF_TANGENT: attrib_name = "TANGENT"; break;
-						case GLTF_TEXCOORD_0: attrib_name = "TEXCOORD_0"; break;
-						case GLTF_TEXCOORD_1: attrib_name = "TEXCOORD_1"; break;
-						case GLTF_COLOR_0: attrib_name = "COLOR_0"; break;
-						case GLTF_JOINTS_0: attrib_name = "JOINTS_0"; break;
-						case GLTF_WEIGHTS_0: attrib_name = "WEIGHTS_0"; break;
-						default: break;
+						case GLTF_NORMAL:
+							attrib_name = "NORMAL";
+							break;
+						case GLTF_TANGENT:
+							attrib_name = "TANGENT";
+							break;
+						case GLTF_TEXCOORD_0:
+							attrib_name = "TEXCOORD_0";
+							break;
+						case GLTF_TEXCOORD_1:
+							attrib_name = "TEXCOORD_1";
+							break;
+						case GLTF_COLOR_0:
+							attrib_name = "COLOR_0";
+							break;
+						case GLTF_JOINTS_0:
+							attrib_name = "JOINTS_0";
+							break;
+						case GLTF_WEIGHTS_0:
+							attrib_name = "WEIGHTS_0";
+							break;
+						default:
+							break;
 					}
-					stream_write_format(stream, STRING_CONST("\t\t\t\t\t\t\"%s\": %u"), attrib_name, primitive->attributes[iattrib]);
+					stream_write_format(stream, STRING_CONST("\t\t\t\t\t\t\"%s\": %u"), attrib_name,
+					                    primitive->attributes[iattrib]);
 					++attrib_count;
 				}
 				if (attrib_count) {
@@ -554,22 +623,23 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 					++token_count;
 				}
 				stream_write(stream, STRING_CONST("\n\t\t\t\t}"));
-				if (iprim < (mesh->primitives_count - 1))
+				if (iprim < (primitives_count - 1))
 					stream_write(stream, STRING_CONST(","));
 				stream_write(stream, STRING_CONST("\n"));
 			}
-			stream_write(stream, STRING_CONST("\t\t\t]\n"));
+			if (primitives_count)
+				stream_write(stream, STRING_CONST("\t\t\t]\n"));
 			stream_write(stream, STRING_CONST("\n\t\t}"));
-			if (imesh < (gltf->meshes_count - 1))
+			if (imesh < (meshes_count - 1))
 				stream_write(stream, STRING_CONST(","));
 			stream_write(stream, STRING_CONST("\n"));
 		}
 		stream_write(stream, STRING_CONST("\t]"));
 	}
-	
-	if (gltf->nodes_count) {
+
+	if (array_count(gltf->nodes)) {
 		stream_write(stream, STRING_CONST(",\n\t\"nodes\": [\n"));
-		for (uint inode = 0; inode < gltf->nodes_count; ++inode) {
+		for (uint inode = 0, nodes_count = array_count(gltf->nodes); inode < nodes_count; ++inode) {
 			gltf_node_t* node = gltf->nodes + inode;
 			stream_write(stream, STRING_CONST("\t\t{\n"));
 			string_const_t node_name = node->name;
@@ -581,33 +651,44 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 			bool has_matrix = node->transform.has_matrix;
 			bool identity_matrix = false;
 			if (has_matrix) {
-				if ((node->transform.matrix[0][0] == 1) && (node->transform.matrix[1][1] == 1) && (node->transform.matrix[2][2] == 1) && (node->transform.matrix[3][3] == 1)) {
-					if ((node->transform.matrix[0][1] == 0) && (node->transform.matrix[0][2] == 0) && (node->transform.matrix[0][3] == 0) &&
-						(node->transform.matrix[1][0] == 0) && (node->transform.matrix[1][2] == 0) && (node->transform.matrix[1][3] == 0) &&
-						(node->transform.matrix[2][0] == 0) && (node->transform.matrix[2][1] == 0) && (node->transform.matrix[2][3] == 0) &&
-						(node->transform.matrix[3][0] == 0) && (node->transform.matrix[3][1] == 0) && (node->transform.matrix[3][2] == 0))
+				if ((node->transform.matrix[0][0] == 1) && (node->transform.matrix[1][1] == 1) &&
+				    (node->transform.matrix[2][2] == 1) && (node->transform.matrix[3][3] == 1)) {
+					if ((node->transform.matrix[0][1] == 0) && (node->transform.matrix[0][2] == 0) &&
+					    (node->transform.matrix[0][3] == 0) && (node->transform.matrix[1][0] == 0) &&
+					    (node->transform.matrix[1][2] == 0) && (node->transform.matrix[1][3] == 0) &&
+					    (node->transform.matrix[2][0] == 0) && (node->transform.matrix[2][1] == 0) &&
+					    (node->transform.matrix[2][3] == 0) && (node->transform.matrix[3][0] == 0) &&
+					    (node->transform.matrix[3][1] == 0) && (node->transform.matrix[3][2] == 0))
 						identity_matrix = true;
 				}
 			}
 			if (has_matrix && !identity_matrix) {
 				stream_write(stream, STRING_CONST(",\n\t\t\t\"matrix\": [\n"));
-				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"), (double)node->transform.matrix[0][0], (double)node->transform.matrix[0][1], (double)node->transform.matrix[0][2], (double)node->transform.matrix[0][3]);
-				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"), (double)node->transform.matrix[1][0], (double)node->transform.matrix[1][1], (double)node->transform.matrix[1][2], (double)node->transform.matrix[1][3]);
-				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"), (double)node->transform.matrix[2][0], (double)node->transform.matrix[2][1], (double)node->transform.matrix[2][2], (double)node->transform.matrix[2][3]);
-				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g\n"), (double)node->transform.matrix[3][0], (double)node->transform.matrix[3][1], (double)node->transform.matrix[3][2], (double)node->transform.matrix[3][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"),
+				                    (double)node->transform.matrix[0][0], (double)node->transform.matrix[0][1],
+				                    (double)node->transform.matrix[0][2], (double)node->transform.matrix[0][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"),
+				                    (double)node->transform.matrix[1][0], (double)node->transform.matrix[1][1],
+				                    (double)node->transform.matrix[1][2], (double)node->transform.matrix[1][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g,\n"),
+				                    (double)node->transform.matrix[2][0], (double)node->transform.matrix[2][1],
+				                    (double)node->transform.matrix[2][2], (double)node->transform.matrix[2][3]);
+				stream_write_format(stream, STRING_CONST("\t\t\t\t%g, %g, %g, %g\n"),
+				                    (double)node->transform.matrix[3][0], (double)node->transform.matrix[3][1],
+				                    (double)node->transform.matrix[3][2], (double)node->transform.matrix[3][3]);
 				stream_write(stream, STRING_CONST("\t\t\t]"));
 			}
 			stream_write(stream, STRING_CONST("\n\t\t}"));
-			if (inode < (gltf->nodes_count - 1))
+			if (inode < (nodes_count - 1))
 				stream_write(stream, STRING_CONST(","));
 			stream_write(stream, STRING_CONST("\n"));
 		}
 		stream_write(stream, STRING_CONST("\t]"));
 	}
-	
-	if (gltf->scenes_count) {
+
+	if (array_count(gltf->scenes)) {
 		stream_write(stream, STRING_CONST(",\n\t\"scenes\": [\n"));
-		for (uint iscene = 0; iscene < gltf->scenes_count; ++iscene) {
+		for (uint iscene = 0, scenes_count = array_count(gltf->scenes); iscene < scenes_count; ++iscene) {
 			gltf_scene_t* scene = gltf->scenes + iscene;
 			stream_write(stream, STRING_CONST("\t\t{\n"));
 			uint token_count = 0;
@@ -615,11 +696,11 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 				stream_write_format(stream, STRING_CONST("\t\t\t\"name\": \"%.*s\""), STRING_FORMAT(scene->name));
 				++token_count;
 			}
-			if (scene->nodes_count) {
+			if (array_count(scene->nodes)) {
 				if (token_count)
 					stream_write_format(stream, STRING_CONST(",\n"));
 				stream_write(stream, STRING_CONST("\t\t\t\"nodes\": ["));
-				for (uint inode = 0; inode < scene->nodes_count; ++inode) {
+				for (uint inode = 0, nodes_count = array_count(scene->nodes); inode < nodes_count; ++inode) {
 					if (inode)
 						stream_write(stream, STRING_CONST(","));
 					if (!(inode % 8))
@@ -634,18 +715,58 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 			if (token_count)
 				stream_write(stream, STRING_CONST("\n"));
 			stream_write(stream, STRING_CONST("\t\t}"));
-			if (iscene < (gltf->scenes_count - 1))
+			if (iscene < (scenes_count - 1))
 				stream_write(stream, STRING_CONST(","));
 			stream_write(stream, STRING_CONST("\n"));
 		}
 		stream_write(stream, STRING_CONST("\t]"));
 	}
-	
+
 	if (gltf->scene != GLTF_INVALID_INDEX) {
 		stream_write_format(stream, STRING_CONST(",\n\t\"scene\": %u\n"), gltf->scene);
 	}
-	
+
 	stream_write(stream, STRING_CONST("\n}\n"));
-	
+
+	if ((gltf->file_type == GLTF_FILE_GLB) || (gltf->file_type == GLTF_FILE_GLB_EMBED)) {
+		stream_set_binary(stream, true);
+
+		size_t current_offset = stream_tell(stream);
+		size_t json_chunk_length = current_offset - json_start_offset;
+
+		if (json_chunk_length % 4) {
+			uint padding = 4 - (json_chunk_length % 4);
+			stream_write(stream, "    ", padding);
+			json_chunk_length += padding;
+		}
+
+		if ((gltf->file_type == GLTF_FILE_GLB_EMBED) && (gltf->output_buffer->count)) {
+			uint chunk_size = (uint)gltf->output_buffer->count;
+			uint padding = 0;
+			if (chunk_size % 4)
+				padding = 4 - (chunk_size % 4);
+			chunk_size += padding;
+
+			// Write binary chunk header (size, type)
+			stream_write_uint32(stream, chunk_size);
+			stream_write_uint32(stream, 0x004E4942);
+
+			// Write binary chunk payload
+			stream_write(stream, gltf->output_buffer->storage, gltf->output_buffer->count);
+
+			if (padding)
+				stream_write(stream, "\0\0\0\0", padding);
+		}
+
+		size_t file_size = stream_tell(stream);
+
+		// Now fill in sizes
+		stream_seek(stream, json_size_offset, STREAM_SEEK_BEGIN);
+		stream_write_uint32(stream, (uint)json_chunk_length);
+
+		stream_seek(stream, file_size_offset, STREAM_SEEK_BEGIN);
+		stream_write_uint32(stream, (uint)file_size);
+	}
+
 	return true;
 }

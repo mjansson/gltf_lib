@@ -21,6 +21,7 @@
 #include <foundation/array.h>
 #include <foundation/bucketarray.h>
 #include <foundation/virtualarray.h>
+#include <foundation/array.h>
 #include <foundation/log.h>
 #include <foundation/hashstrings.h>
 
@@ -30,25 +31,25 @@
 static void
 gltf_primitive_finalize(gltf_primitive_t* primitive) {
 	if (primitive->attributes_custom) {
-		memory_deallocate(primitive->attributes_custom);
+		array_deallocate(primitive->attributes_custom);
 	}
 }
 
 static void
 gltf_mesh_finalize(gltf_mesh_t* mesh) {
 	if (mesh->primitives) {
-		for (uint iprim = 0; iprim < mesh->primitives_count; ++iprim)
+		for (uint iprim = 0, primitives_count = array_count(mesh->primitives); iprim < primitives_count; ++iprim)
 			gltf_primitive_finalize(mesh->primitives + iprim);
-		memory_deallocate(mesh->primitives);
+		array_deallocate(mesh->primitives);
 	}
 }
 
 void
 gltf_meshes_finalize(gltf_t* gltf) {
 	if (gltf->meshes) {
-		for (uint imesh = 0; imesh < gltf->meshes_count; ++imesh)
+		for (uint imesh = 0, meshes_count = array_count(gltf->meshes); imesh < meshes_count; ++imesh)
 			gltf_mesh_finalize(gltf->meshes + imesh);
-		memory_deallocate(gltf->meshes);
+		array_deallocate(gltf->meshes);
 	}
 }
 
@@ -96,12 +97,12 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 		itoken = tokens[itoken].sibling;
 	}
 
-	primitive->attributes_custom_count = custom_count;
-	primitive->attributes_custom = custom_count ? memory_allocate(HASH_GLTF, sizeof(gltf_attribute_t) * custom_count, 0,
-	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED) : nullptr;
-
-	for (uint iattrib = 0; iattrib < custom_count; ++iattrib)
-		primitive->attributes_custom[iattrib].accessor = GLTF_INVALID_INDEX;
+	primitive->attributes_custom = 0;
+	if (custom_count) {
+		array_resize(primitive->attributes_custom, custom_count);
+		for (uint iattrib = 0; iattrib < custom_count; ++iattrib)
+			primitive->attributes_custom[iattrib].accessor = GLTF_INVALID_INDEX;
+	}
 
 	itoken = tokens[iparent].child;
 	while (itoken && custom_count) {
@@ -116,8 +117,7 @@ gltf_primitive_parse_attributes(gltf_t* gltf, const char* buffer, json_token_t* 
 		}
 
 		gltf_attribute_t* attrib = primitive->attributes_custom + custom_count;
-		attrib->semantic = identifier.str;
-		attrib->semantic_length = identifier.length;
+		attrib->semantic = identifier;
 		if (!gltf_token_to_integer(gltf, buffer, tokens, itoken, &attrib->accessor))
 			return false;
 		--custom_count;
@@ -178,12 +178,11 @@ gltf_mesh_parse_primitives(gltf_t* gltf, const char* buffer, json_token_t* token
 	size_t primitives_count = tokens[itoken].value_length;
 	if (primitives_count > GLTF_MAX_INDEX)
 		return false;
+
+	array_resize(mesh->primitives, primitives_count);
+
 	if (!primitives_count)
 		return true;
-
-	size_t size = sizeof(gltf_primitive_t) * primitives_count;
-	mesh->primitives_count = (uint)primitives_count;
-	mesh->primitives = memory_allocate(HASH_GLTF, size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	uint iprim = 0;
 	itoken = tokens[itoken].child;
@@ -233,13 +232,11 @@ gltf_meshes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 	size_t meshes_count = tokens[itoken].value_length;
 	if (meshes_count > GLTF_MAX_INDEX)
 		return false;
+
+	array_resize(gltf->meshes, meshes_count);
+
 	if (!meshes_count)
 		return true;
-
-	size_t storage_size = sizeof(gltf_mesh_t) * meshes_count;
-	gltf_meshes_finalize(gltf);
-	gltf->meshes_count = (uint)meshes_count;
-	gltf->meshes = memory_allocate(HASH_GLTF, storage_size, 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	uint icounter = 0;
 	size_t imesh = tokens[itoken].child;
@@ -258,17 +255,12 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 	if (!mesh || !mesh->triangle.count || !mesh->vertex.count)
 		return GLTF_INVALID_INDEX;
 
-	uint meshes_count = gltf->meshes_count;
-	size_t old_storage_size = sizeof(gltf_mesh_t) * meshes_count;
-	size_t storage_size = sizeof(gltf_mesh_t) * (++meshes_count);
-	gltf->meshes_count = (uint)meshes_count;
-	gltf->meshes = memory_reallocate(gltf->meshes, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	gltf_mesh_t* gltf_mesh = pointer_offset(gltf->meshes, old_storage_size);
+	gltf_mesh_t gltf_mesh = {0};
 
 	string_t mesh_name = string_clone(STRING_ARGS(mesh->name));
 	array_push(gltf->string_array, mesh_name);
 
-	gltf_mesh->name = string_const(STRING_ARGS(mesh_name));
+	gltf_mesh.name = string_const(STRING_ARGS(mesh_name));
 
 	// First setup the vertex attribute accessors
 	// Make sure we have an output buffer ready
@@ -285,19 +277,22 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 		accessor.component_type = GLTF_COMPONENT_FLOAT;
 		accessor.count = (uint)mesh->vertex.count;
 		accessor.byte_offset = 0;
-		accessor.buffer_view = gltf->buffer_views_count;
+		accessor.buffer_view = array_count(gltf->buffer_views);
 
 		gltf_buffer_view_t buffer_view = {0};
 		buffer_view.buffer = 0;
 		buffer_view.byte_offset = current_offset;
 		buffer_view.byte_length = sizeof(float) * accessor.count * 3;
 
+		array_push(gltf->buffer_views, buffer_view);
+
 		vector_t vmin = vector_uniform(REAL_MAX);
 		vector_t vmax = vector_uniform(-REAL_MAX);
 		float* vertex_component = pointer_offset(gltf->output_buffer->storage, buffer_view.byte_offset);
 		for (uint ivert = 0; ivert < mesh->vertex.count; ++ivert) {
 			const mesh_vertex_t* mesh_vertex = bucketarray_get_const(&mesh->vertex, ivert);
-			const mesh_coordinate_t* mesh_coordinate = bucketarray_get_const(&mesh->coordinate, mesh_vertex->coordinate);
+			const mesh_coordinate_t* mesh_coordinate =
+			    bucketarray_get_const(&mesh->coordinate, mesh_vertex->coordinate);
 			*vertex_component++ = vector_x(*mesh_coordinate);
 			*vertex_component++ = vector_y(*mesh_coordinate);
 			*vertex_component++ = vector_z(*mesh_coordinate);
@@ -315,18 +310,9 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 		accessor.max[1] = vector_y(vmax);
 		accessor.max[2] = vector_z(vmax);
 		accessor.max[3] = 1;
-		
-		coordinate_accessor = gltf->accessors_count;
 
-		old_storage_size = sizeof(gltf_buffer_view_t) * gltf->buffer_views_count;
-		storage_size = sizeof(gltf_buffer_view_t) * (gltf->buffer_views_count + 1);
-		gltf->buffer_views = memory_reallocate(gltf->buffer_views, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		gltf->buffer_views[gltf->buffer_views_count++] = buffer_view;
-
-		old_storage_size = sizeof(gltf_accessor_t) * gltf->accessors_count;
-		storage_size = sizeof(gltf_accessor_t) * (gltf->accessors_count + 1);
-		gltf->accessors = memory_reallocate(gltf->accessors, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		gltf->accessors[gltf->accessors_count++] = accessor;
+		coordinate_accessor = array_count(gltf->accessors);
+		array_push(gltf->accessors, accessor);
 	}
 
 	// Normals
@@ -337,12 +323,14 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 		accessor.component_type = GLTF_COMPONENT_FLOAT;
 		accessor.count = (uint)mesh->vertex.count;
 		accessor.byte_offset = 0;
-		accessor.buffer_view = gltf->buffer_views_count;
+		accessor.buffer_view = array_count(gltf->buffer_views);
 
 		gltf_buffer_view_t buffer_view = {0};
 		buffer_view.buffer = 0;
 		buffer_view.byte_offset = current_offset;
 		buffer_view.byte_length = sizeof(float) * accessor.count * 3;
+
+		array_push(gltf->buffer_views, buffer_view);
 
 		vector_t vmin = vector_uniform(REAL_MAX);
 		vector_t vmax = vector_uniform(-REAL_MAX);
@@ -367,18 +355,9 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 		accessor.max[1] = vector_y(vmax);
 		accessor.max[2] = vector_z(vmax);
 		accessor.max[3] = 1;
-		
-		normal_accessor = gltf->accessors_count;
 
-		old_storage_size = sizeof(gltf_buffer_view_t) * gltf->buffer_views_count;
-		storage_size = sizeof(gltf_buffer_view_t) * (gltf->buffer_views_count + 1);
-		gltf->buffer_views = memory_reallocate(gltf->buffer_views, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		gltf->buffer_views[gltf->buffer_views_count++] = buffer_view;
-
-		old_storage_size = sizeof(gltf_accessor_t) * gltf->accessors_count;
-		storage_size = sizeof(gltf_accessor_t) * (gltf->accessors_count + 1);
-		gltf->accessors = memory_reallocate(gltf->accessors, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		gltf->accessors[gltf->accessors_count++] = accessor;
+		normal_accessor = array_count(gltf->accessors);
+		array_push(gltf->accessors, accessor);
 	}
 
 	// Now create primitives and index accessors
@@ -393,14 +372,9 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 		uint* index = pointer_offset(gltf->output_buffer->storage, current_offset);
 
 		// One primitive per material
-		old_storage_size = sizeof(gltf_primitive_t) * gltf_mesh->primitives_count;
-		storage_size = sizeof(gltf_primitive_t) * (++gltf_mesh->primitives_count);
-		gltf_mesh->primitives = memory_reallocate(gltf_mesh->primitives, storage_size, 0, old_storage_size,
-		                                          MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-
-		gltf_primitive_t* primitive = gltf_mesh->primitives + current_primitive;
+		gltf_primitive_t primitive = {0};
 		for (int iattrib = 0; iattrib < GLTF_ATTRIBUTE_COUNT; ++iattrib)
-			primitive->attributes[iattrib] = GLTF_INVALID_INDEX;
+			primitive.attributes[iattrib] = GLTF_INVALID_INDEX;
 
 		// Start at the first encountered remaining triangle
 		uint triangle_start = triangle_restart;
@@ -428,39 +402,37 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 
 		// All triangles for this primitive collected, setup primitive and create index accessor
 		// All primitives share the vertex attribute accessors
-		primitive->material = current_material;
-		primitive->mode = GLTF_TRIANGLES;
-		primitive->attributes[GLTF_POSITION] = coordinate_accessor;
-		primitive->attributes[GLTF_NORMAL] = normal_accessor;
-		primitive->indices = gltf->accessors_count;
+		primitive.material = current_material;
+		primitive.mode = GLTF_TRIANGLES;
+		primitive.attributes[GLTF_POSITION] = coordinate_accessor;
+		primitive.attributes[GLTF_NORMAL] = normal_accessor;
+		primitive.indices = array_count(gltf->accessors);
+
+		array_push(gltf_mesh.primitives, primitive);
 
 		gltf_accessor_t accessor = {0};
 		accessor.type = GLTF_DATA_SCALAR;
 		accessor.component_type = GLTF_COMPONENT_UNSIGNED_INT;
 		accessor.count = triangle_count * 3;
 		accessor.byte_offset = 0;
-		accessor.buffer_view = gltf->buffer_views_count;
+		accessor.buffer_view = array_count(gltf->buffer_views);
+
+		array_push(gltf->accessors, accessor);
 
 		gltf_buffer_view_t buffer_view = {0};
 		buffer_view.buffer = 0;
 		buffer_view.byte_offset = current_offset;
 		buffer_view.byte_length = sizeof(uint) * accessor.count;
 
+		array_push(gltf->buffer_views, buffer_view);
+
 		current_offset += buffer_view.byte_length;
-
-		old_storage_size = sizeof(gltf_buffer_view_t) * gltf->buffer_views_count;
-		storage_size = sizeof(gltf_buffer_view_t) * (gltf->buffer_views_count + 1);
-		gltf->buffer_views = memory_reallocate(gltf->buffer_views, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		gltf->buffer_views[gltf->buffer_views_count++] = buffer_view;
-
-		old_storage_size = sizeof(gltf_accessor_t) * gltf->accessors_count;
-		storage_size = sizeof(gltf_accessor_t) * (gltf->accessors_count + 1);
-		gltf->accessors = memory_reallocate(gltf->accessors, storage_size, 0, old_storage_size, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		gltf->accessors[gltf->accessors_count++] = accessor;
 
 		++current_primitive;
 	}
 	FOUNDATION_ASSERT(current_offset == (uint)gltf->output_buffer->count);
 
-	return (uint)(meshes_count - 1);
+	array_push(gltf->meshes, gltf_mesh);
+
+	return (uint)(array_count(gltf->meshes) - 1);
 }
