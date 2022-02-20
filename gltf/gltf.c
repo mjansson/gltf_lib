@@ -740,7 +740,7 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 			json_chunk_length += padding;
 		}
 
-		if ((gltf->file_type == GLTF_FILE_GLB_EMBED) && (gltf->output_buffer->count)) {
+		if ((gltf->file_type == GLTF_FILE_GLB_EMBED) && gltf->output_buffer && gltf->output_buffer->count) {
 			uint chunk_size = (uint)gltf->output_buffer->count;
 			uint padding = 0;
 			if (chunk_size % 4)
