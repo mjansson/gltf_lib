@@ -364,9 +364,7 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 	// Make sure we have an output buffer ready
 	virtualarray_resize(gltf->output_buffer, current_offset + (sizeof(uint) * mesh->triangle.count * 3));
 
-	uint current_primitive = 0;
 	uint triangle_restart = 0;
-
 	while (triangle_restart != GLTF_INVALID_INDEX) {
 		// One triangle index buffer per primitive
 		uint* index = pointer_offset(gltf->output_buffer->storage, current_offset);
@@ -427,8 +425,6 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 		array_push(gltf->buffer_views, buffer_view);
 
 		current_offset += buffer_view.byte_length;
-
-		++current_primitive;
 	}
 	FOUNDATION_ASSERT(current_offset == (uint)gltf->output_buffer->count);
 
