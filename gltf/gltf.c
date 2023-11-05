@@ -556,6 +556,28 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 		stream_write(stream, STRING_CONST("\t]"));
 	}
 
+	if (array_count(gltf->materials)) {
+		stream_write(stream, STRING_CONST(",\n\t\"materials\": ["));
+		for (uint imat = 0, material_count = array_count(gltf->materials); imat < material_count; ++imat) {
+			gltf_material_t* material = gltf->materials + imat;
+			if (imat > 0)
+				stream_write(stream, STRING_CONST(","));
+			stream_write(stream, STRING_CONST("\n\t\t{\n"));
+			string_const_t material_name = material->name;
+			if (!material_name.length)
+				material_name = string_const(STRING_CONST("<unnamed>"));
+			stream_write_format(stream, STRING_CONST("\t\t\t\"name\": \"%.*s\""), STRING_FORMAT(material_name));
+			stream_write(stream, STRING_CONST(",\n\t\t\t\"pbrMetallicRoughness\": {"));
+			stream_write_format(
+			    stream, STRING_CONST("\n\t\t\t\t\"baseColorFactor\": [%f, %f, %f, %f]"),
+			    material->metallic_roughness.base_color_factor[0], material->metallic_roughness.base_color_factor[1],
+			    material->metallic_roughness.base_color_factor[2], material->metallic_roughness.base_color_factor[3]);
+			stream_write(stream, STRING_CONST("\n\t\t\t}"));
+			stream_write(stream, STRING_CONST("\n\t\t}"));
+		}
+		stream_write(stream, STRING_CONST("\n\t]"));
+	}
+
 	if (array_count(gltf->meshes)) {
 		stream_write(stream, STRING_CONST(",\n\t\"meshes\": [\n"));
 		for (uint imesh = 0, meshes_count = array_count(gltf->meshes); imesh < meshes_count; ++imesh) {
@@ -620,6 +642,12 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 					if (token_count)
 						stream_write(stream, STRING_CONST(","));
 					stream_write_format(stream, STRING_CONST("\n\t\t\t\t\t\"indices\": %u"), primitive->indices);
+					++token_count;
+				}
+				if (array_count(gltf->materials)) {
+					if (token_count)
+						stream_write(stream, STRING_CONST(","));
+					stream_write_format(stream, STRING_CONST("\n\t\t\t\t\t\"material\": %u"), primitive->material);
 					++token_count;
 				}
 				stream_write(stream, STRING_CONST("\n\t\t\t\t}"));

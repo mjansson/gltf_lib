@@ -28,8 +28,9 @@ gltf_materials_finalize(gltf_t* gltf) {
 		array_deallocate(gltf->materials);
 }
 
-static void
+void
 gltf_material_initialize(gltf_material_t* material) {
+	material->name = string_const(0, 0);
 	for (uint ielem = 0; ielem < 4; ++ielem)
 		material->metallic_roughness.base_color_factor[ielem] = 1.0;
 	material->metallic_roughness.metallic_factor = 1.0;

@@ -26,4 +26,4 @@ gltf_meshes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 struct mesh_t;
 
 GLTF_API uint
-gltf_mesh_add_mesh(gltf_t* gltf, const struct mesh_t* mesh);
+gltf_mesh_add_mesh(gltf_t* gltf, const struct mesh_t* mesh, uint* mesh_material_map);

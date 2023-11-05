@@ -19,5 +19,8 @@
 GLTF_API void
 gltf_materials_finalize(gltf_t* gltf);
 
+GLTF_API void
+gltf_material_initialize(gltf_material_t* material);
+
 GLTF_API bool
 gltf_materials_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t itoken);

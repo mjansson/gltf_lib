@@ -251,7 +251,7 @@ gltf_meshes_parse(gltf_t* gltf, const char* buffer, json_token_t* tokens, size_t
 }
 
 uint
-gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
+gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh, uint* mesh_material_map) {
 	if (!mesh || !mesh->triangle.count || !mesh->vertex.count)
 		return GLTF_INVALID_INDEX;
 
@@ -400,7 +400,7 @@ gltf_mesh_add_mesh(gltf_t* gltf, const mesh_t* mesh) {
 
 		// All triangles for this primitive collected, setup primitive and create index accessor
 		// All primitives share the vertex attribute accessors
-		primitive.material = current_material;
+		primitive.material = mesh_material_map ? mesh_material_map[current_material] : current_material;
 		primitive.mode = GLTF_TRIANGLES;
 		primitive.attributes[GLTF_POSITION] = coordinate_accessor;
 		primitive.attributes[GLTF_NORMAL] = normal_accessor;
