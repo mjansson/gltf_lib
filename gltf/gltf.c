@@ -568,10 +568,11 @@ gltf_write(const gltf_t* gltf, stream_t* stream) {
 				material_name = string_const(STRING_CONST("<unnamed>"));
 			stream_write_format(stream, STRING_CONST("\t\t\t\"name\": \"%.*s\""), STRING_FORMAT(material_name));
 			stream_write(stream, STRING_CONST(",\n\t\t\t\"pbrMetallicRoughness\": {"));
-			stream_write_format(
-			    stream, STRING_CONST("\n\t\t\t\t\"baseColorFactor\": [%f, %f, %f, %f]"),
-			    material->metallic_roughness.base_color_factor[0], material->metallic_roughness.base_color_factor[1],
-			    material->metallic_roughness.base_color_factor[2], material->metallic_roughness.base_color_factor[3]);
+			stream_write_format(stream, STRING_CONST("\n\t\t\t\t\"baseColorFactor\": [%f, %f, %f, %f]"),
+			                    (double)material->metallic_roughness.base_color_factor[0],
+			                    (double)material->metallic_roughness.base_color_factor[1],
+			                    (double)material->metallic_roughness.base_color_factor[2],
+			                    (double)material->metallic_roughness.base_color_factor[3]);
 			stream_write(stream, STRING_CONST("\n\t\t\t}"));
 			stream_write(stream, STRING_CONST("\n\t\t}"));
 		}
