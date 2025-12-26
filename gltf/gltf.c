@@ -386,7 +386,7 @@ gltf_read(gltf_t* gltf, stream_t* stream) {
 			          array_count(mesh->primitives));
 			for (uint iprim = 0, primitives_count = array_count(mesh->primitives); iprim < primitives_count; ++iprim) {
 				gltf_primitive_t* prim = mesh->primitives + iprim;
-				log_infof(HASH_GLTF, STRING_CONST("      %u: type %d material %d"), iprim, prim->mode, prim->material);
+				log_infof(HASH_GLTF, STRING_CONST("      %u: type %u material %u"), iprim, prim->mode, prim->material);
 			}
 		}
 		log_infof(HASH_GLTF, STRING_CONST("  %u textures"), gltf->textures_count);
